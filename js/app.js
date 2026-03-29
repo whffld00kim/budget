@@ -677,7 +677,7 @@ function backupData() {
     version: 1,
     exportedAt: new Date().toISOString(),
     transactions: txList,
-    custom: customAccounts,
+    custom: loadCustom(),
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -699,10 +699,9 @@ function restoreData(file) {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
       if (!confirm(`${data.transactions.length}개의 거래 내역을 불러옵니다.\n현재 데이터는 덮어씌워집니다. 계속할까요?`)) return;
-      txList         = data.transactions;
-      customAccounts = data.custom || { income: [], expense: [] };
+      txList = data.transactions;
       saveTx();
-      saveCustom();
+      saveCustom(data.custom || { income: [], expense: [] });
       renderHome();
       toast('불러오기 완료!');
     } catch (err) {
