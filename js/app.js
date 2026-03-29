@@ -765,6 +765,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // 홈 – 전체보기
   document.getElementById('btn-see-all').addEventListener('click', () => goPage('history'));
 
+  // 홈 – 총 수입/지출 클릭 시 내역 탭으로 이동 + 필터 적용
+  document.querySelector('.income-item').addEventListener('click', () => {
+    histTypeFilter = 'income';
+    goPage('history');
+    document.querySelectorAll('#hist-type-tabs .ftab').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === 'income');
+    });
+  });
+  document.querySelector('.expense-item').addEventListener('click', () => {
+    histTypeFilter = 'expense';
+    goPage('history');
+    document.querySelectorAll('#hist-type-tabs .ftab').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === 'expense');
+    });
+  });
+
   // 백업 / 불러오기
   document.getElementById('btn-backup').addEventListener('click', backupData);
   document.getElementById('btn-restore').addEventListener('click', () => document.getElementById('restore-file').click());
@@ -787,6 +803,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (active?.id === 'page-stats')   renderStats();
     }
   });
+
+  // 스와이프로 탭 이동 (좌→우: 이전 탭, 우→좌: 다음 탭)
+  const PAGES = ['home', 'history', 'stats'];
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.getElementById('app').addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.getElementById('app').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // 짧은 터치 or 세로 스크롤 무시
+    const activePage = document.querySelector('.page.active')?.id.replace('page-', '');
+    const idx = PAGES.indexOf(activePage);
+    if (dx < 0 && idx < PAGES.length - 1) goPage(PAGES[idx + 1]); // 오른쪽→왼쪽: 다음 탭
+    if (dx > 0 && idx > 0)                goPage(PAGES[idx - 1]); // 왼쪽→오른쪽: 이전 탭
+  }, { passive: true });
 
   // 초기 렌더
   renderHome();

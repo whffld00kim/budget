@@ -163,8 +163,9 @@ input  { font-family: inherit; }
   border-left: 4px solid transparent;
 }
 
-.income-item  { border-left-color: var(--income); }
-.expense-item { border-left-color: var(--expense); }
+.income-item  { border-left-color: var(--income); cursor: pointer; }
+.expense-item { border-left-color: var(--expense); cursor: pointer; }
+.income-item:active, .expense-item:active { opacity: 0.75; }
 
 .summary-label {
   display: block;
