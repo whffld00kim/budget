@@ -1,0 +1,718 @@
+/* ============ CSS 변수 ============ */
+:root {
+  --primary:       #5B4FCF;
+  --primary-dark:  #4A3FB8;
+  --primary-light: #EEEAFF;
+  --income:        #10B981;
+  --income-light:  #D1FAE5;
+  --expense:       #EF4444;
+  --expense-light: #FEE2E2;
+  --bg:            #F3F4F8;
+  --card:          #FFFFFF;
+  --text:          #1A1A2E;
+  --text2:         #6B7280;
+  --text3:         #9CA3AF;
+  --border:        #E5E7EB;
+  --nav-h:         68px;
+  --radius:        14px;
+  --radius-sm:     10px;
+  --shadow:        0 1px 4px rgba(0,0,0,.08);
+  --shadow-md:     0 4px 16px rgba(0,0,0,.10);
+}
+
+/* ============ 리셋 ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input  { font-family: inherit; }
+
+/* ============ 앱 래퍼 ============ */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ============ 페이지 ============ */
+.page {
+  display: none;
+  padding-bottom: calc(var(--nav-h) + 24px);
+  animation: fadeUp .2s ease;
+}
+.page.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ 페이지 헤더 ============ */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--primary);
+  padding: 14px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(91,79,207,.25);
+}
+
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.85);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+.month-btn:hover { background: rgba(255,255,255,.15); }
+
+.month-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ============ 페이지 바디 ============ */
+.page-body { padding: 14px 14px 0; }
+
+/* ============ 카드 ============ */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-head {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 14px;
+}
+
+/* ============ 홈: 잔액 카드 ============ */
+.balance-card {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(91,79,207,.35);
+  text-align: center;
+}
+
+.balance-label {
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.balance-amount {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+/* ============ 홈: 수입/지출 그리드 ============ */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.summary-item {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 14px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid transparent;
+}
+
+.income-item  { border-left-color: var(--income); }
+.expense-item { border-left-color: var(--expense); }
+
+.summary-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.summary-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+.income-val  { color: var(--income); }
+.expense-val { color: var(--expense); }
+
+/* ============ 주체별 행 ============ */
+.subject-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.subject-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.subject-name {
+  font-size: 14px;
+  font-weight: 700;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.subject-vals {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.sv-income  { font-size: 13px; font-weight: 600; color: var(--income); }
+.sv-expense { font-size: 13px; font-weight: 600; color: var(--expense); }
+.sv-net     { font-size: 13px; font-weight: 800; }
+
+/* ============ 섹션 헤더 ============ */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.text-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ============ 거래 항목 ============ */
+.tx-item {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: box-shadow .15s, transform .1s;
+}
+.tx-item:active { transform: scale(.99); box-shadow: none; }
+
+.tx-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.tx-dot.inc { background: var(--income-light); color: var(--income); }
+.tx-dot.exp { background: var(--expense-light); color: var(--expense); }
+
+.tx-info { flex: 1; min-width: 0; }
+
+.tx-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.tx-account {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+.badge-도연 { background: #F3E8FF; color: #7C3AED; }
+.badge-민성 { background: #DBEAFE; color: #1D4ED8; }
+.badge-공통 { background: #F3F4F6; color: #4B5563; }
+.badge-dash  { background: #FEF2F2; color: #EF4444; }
+
+.tx-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tx-date { font-size: 12px; color: var(--text3); }
+
+.tx-desc {
+  font-size: 12px;
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tx-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.tx-amount {
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.tx-amount.inc { color: var(--income); }
+.tx-amount.exp { color: var(--expense); }
+
+.tx-del {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.tx-del:hover { background: var(--expense-light); color: var(--expense); }
+.tx-del svg { width: 15px; height: 15px; }
+
+/* ============ 빈 상태 ============ */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text2);
+}
+.empty-icon { font-size: 44px; margin-bottom: 10px; }
+.empty-msg  { font-size: 15px; font-weight: 600; }
+.empty-sub  { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+/* ============ 필터 탭 ============ */
+.filter-tabs {
+  display: flex;
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  gap: 4px;
+}
+
+.ftab {
+  flex: 1;
+  padding: 9px 4px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  transition: all .2s;
+}
+.ftab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(91,79,207,.3);
+}
+
+/* ============ 칩 그룹 ============ */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  box-shadow: var(--shadow);
+  transition: all .15s;
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+.chip.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(91,79,207,.3);
+}
+.chip.add-chip {
+  background: none;
+  border-style: dashed;
+  color: var(--text3);
+  box-shadow: none;
+}
+.chip.add-chip:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ============ 하단 네비게이션 ============ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: var(--nav-h);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 -2px 12px rgba(0,0,0,.07);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  transition: color .15s;
+}
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item.active { color: var(--primary); }
+.nav-item:not(.nav-add-btn):hover { color: var(--primary); }
+
+.nav-add-btn { color: var(--primary); }
+
+.add-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(91,79,207,.45);
+  margin-top: -14px;
+  transition: transform .15s, box-shadow .15s;
+}
+.add-circle:hover  { transform: scale(1.06); }
+.add-circle:active { transform: scale(.95); box-shadow: 0 2px 8px rgba(91,79,207,.35); }
+.add-circle svg { width: 26px; height: 26px; color: #fff; }
+
+/* ============ 모달 ============ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(2px);
+}
+
+.modal-sheet {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  max-height: 93vh;
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp .3s cubic-bezier(.32,.72,0,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px 10px;
+  flex-shrink: 0;
+}
+.modal-top h2 { font-size: 18px; font-weight: 800; }
+
+.modal-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  transition: background .15s;
+}
+.modal-close-btn:hover { background: var(--border); }
+.modal-close-btn svg { width: 16px; height: 16px; }
+
+.modal-body {
+  overflow-y: auto;
+  padding: 4px 20px 36px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============ 폼 ============ */
+.form-group { margin-bottom: 18px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+
+/* 구분 토글 */
+.type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+}
+
+.type-btn {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text2);
+  transition: all .2s;
+}
+.type-btn.sel-inc {
+  background: var(--income);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16,185,129,.35);
+}
+.type-btn.sel-exp {
+  background: var(--expense);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(239,68,68,.35);
+}
+
+/* 텍스트 입력 */
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--card);
+  outline: none;
+  transition: border-color .15s;
+}
+.form-input:focus { border-color: var(--primary); }
+.form-input::placeholder { color: var(--text3); }
+
+/* 금액 입력 */
+.amount-wrap { position: relative; }
+.amount-wrap .form-input { padding-right: 34px; }
+.amount-unit {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text2);
+  pointer-events: none;
+}
+
+/* 새 계정 인라인 입력 */
+.new-acc-wrap {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+}
+.new-acc-wrap .form-input {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 14px;
+}
+.btn-acc-confirm {
+  padding: 9px 14px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-acc-confirm:hover { background: var(--primary-dark); }
+
+/* 저장 버튼 */
+.btn-save {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 6px;
+  box-shadow: 0 4px 14px rgba(91,79,207,.35);
+  transition: transform .15s, box-shadow .15s;
+}
+.btn-save:active { transform: scale(.98); box-shadow: 0 2px 8px rgba(91,79,207,.3); }
+
+/* ============ 통계: 차트 ============ */
+.chart-box {
+  position: relative;
+  height: 200px;
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut-box {
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.donut-legend {
+  flex: 1;
+  list-style: none;
+}
+
+.donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-name { flex: 1; font-weight: 600; }
+.legend-pct  { font-size: 11px; color: var(--text3); }
+
+.empty-chart {
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+  padding: 20px 0;
+}
+
+/* ============ 토스트 ============ */
+.toast {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1F2937;
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 300;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+.toast.hidden { display: none; }
+
+/* ============ 스크롤바 ============ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ============ 반응형 (PC) ============ */
+@media (min-width: 480px) {
+  body { background: #D1D5DB; }
+  #app { box-shadow: 0 0 40px rgba(0,0,0,.15); min-height: 100vh; background: var(--bg); }
+}
+
+/* ============ 노치 대응 ============ */
+@supports (padding: max(0px)) {
+  .bottom-nav { padding-bottom: env(safe-area-inset-bottom); height: calc(var(--nav-h) + env(safe-area-inset-bottom)); }
+  .page       { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px); }
+}
