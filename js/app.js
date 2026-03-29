@@ -100,7 +100,13 @@ function loadTx() {
     return JSON.parse(raw);
   } catch { return [...INIT_TX]; }
 }
-function saveTx(list) { localStorage.setItem(STORAGE_TX, JSON.stringify(list)); }
+function saveTx(list) {
+  try {
+    localStorage.setItem(STORAGE_TX, JSON.stringify(list));
+  } catch(e) {
+    toast('저장 실패: 저장 공간이 부족합니다');
+  }
+}
 
 function loadCustom() {
   try {
@@ -770,6 +776,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // 모달 닫기
   document.getElementById('modal-close').addEventListener('click',    closeModal);
   document.getElementById('modal-backdrop').addEventListener('click', closeModal);
+
+  // 앱이 백그라운드에서 돌아올 때 데이터 새로고침 (iOS PWA 대응)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      txList = loadTx();
+      const active = document.querySelector('.page.active');
+      if (active?.id === 'page-home')    renderHome();
+      if (active?.id === 'page-history') renderHistory();
+      if (active?.id === 'page-stats')   renderStats();
+    }
+  });
 
   // 초기 렌더
   renderHome();
