@@ -706,7 +706,7 @@ function restoreData(file) {
       if (!Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
       if (!confirm(`${data.transactions.length}개의 거래 내역을 불러옵니다.\n현재 데이터는 덮어씌워집니다. 계속할까요?`)) return;
       txList = data.transactions;
-      saveTx();
+      saveTx(txList);
       saveCustom(data.custom || { income: [], expense: [] });
       renderHome();
       toast('불러오기 완료!');
