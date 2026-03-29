@@ -227,6 +227,29 @@ input  { font-family: inherit; }
   color: var(--primary);
 }
 
+/* ============ 백업 버튼 ============ */
+.backup-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  padding-bottom: 8px;
+}
+.backup-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  cursor: pointer;
+}
+.backup-btn.restore {
+  background: var(--primary);
+  color: #fff;
+}
+
 /* ============ 거래 항목 ============ */
 .tx-item {
   background: var(--card);
