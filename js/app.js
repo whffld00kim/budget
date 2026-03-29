@@ -670,6 +670,49 @@ function escHtml(s) {
 }
 
 /* =============================================
+   백업 / 불러오기
+============================================= */
+function backupData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    transactions: txList,
+    custom: customAccounts,
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href     = url;
+  a.download = `가계부_백업_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('백업 파일이 저장되었습니다.');
+}
+
+function restoreData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
+      if (!confirm(`${data.transactions.length}개의 거래 내역을 불러옵니다.\n현재 데이터는 덮어씌워집니다. 계속할까요?`)) return;
+      txList         = data.transactions;
+      customAccounts = data.custom || { income: [], expense: [] };
+      saveTx();
+      saveCustom();
+      renderHome();
+      toast('불러오기 완료!');
+    } catch (err) {
+      alert('파일을 읽는 중 오류가 발생했습니다:\n' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* =============================================
    이벤트 바인딩 (초기화)
 ============================================= */
 document.addEventListener('DOMContentLoaded', () => {
@@ -716,6 +759,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 홈 – 전체보기
   document.getElementById('btn-see-all').addEventListener('click', () => goPage('history'));
+
+  // 백업 / 불러오기
+  document.getElementById('btn-backup').addEventListener('click', backupData);
+  document.getElementById('btn-restore').addEventListener('click', () => document.getElementById('restore-file').click());
+  document.getElementById('restore-file').addEventListener('change', e => {
+    restoreData(e.target.files[0]);
+    e.target.value = '';
+  });
 
   // 모달 닫기
   document.getElementById('modal-close').addEventListener('click',    closeModal);
