@@ -148,7 +148,7 @@ let chartIncDonut   = null;
 /* =============================================
    유틸
 ============================================= */
-function fmt(n)   { return '₩' + Math.abs(n).toLocaleString('ko-KR'); }
+function fmt(n)   { return Math.abs(n).toLocaleString('ko-KR'); }
 function today()  { return new Date().toISOString().slice(0, 10); }
 function uid()    { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
 
@@ -218,7 +218,15 @@ function renderHome() {
   const totalExp = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const bal = totalInc - totalExp;
 
-  document.getElementById('home-balance').textContent = fmt(bal);
+  // 이월잔액: 현재 월 이전의 모든 거래 합산
+  const carry = txList.filter(t => {
+    const [ty, tm] = t.date.split('-').map(Number);
+    return ty < viewYear || (ty === viewYear && tm < viewMonth);
+  }).reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
+
+  const totalBal = carry + bal;
+  document.getElementById('home-carry').textContent   = (carry >= 0 ? '+' : '-') + fmt(carry);
+  document.getElementById('home-balance').textContent = (totalBal >= 0 ? '' : '-') + fmt(totalBal);
   document.getElementById('home-income').textContent  = fmt(totalInc);
   document.getElementById('home-expense').textContent = fmt(totalExp);
 

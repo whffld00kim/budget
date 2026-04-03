@@ -133,18 +133,38 @@ input  { font-family: inherit; }
   text-align: center;
 }
 
+.balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+}
+.balance-col {
+  flex: 1;
+  text-align: center;
+}
+.balance-divider {
+  width: 1px;
+  height: 48px;
+  background: rgba(255,255,255,.3);
+  flex-shrink: 0;
+}
 .balance-label {
   font-size: 13px;
   color: rgba(255,255,255,.8);
   margin-bottom: 6px;
   font-weight: 500;
 }
-
 .balance-amount {
   font-size: 32px;
   font-weight: 800;
   color: #fff;
   letter-spacing: -1px;
+}
+.balance-carry {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255,255,255,.6);
 }
 
 /* ============ 홈: 수입/지출 그리드 ============ */
