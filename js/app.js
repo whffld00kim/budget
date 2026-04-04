@@ -1279,10 +1279,14 @@ function applyFixedToMonth() {
 ============================================= */
 function backupData() {
   const data = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     transactions: txList,
     custom: loadCustom(),
+    fixed: loadFixed(),
+    irregular: loadIrr(),
+    deduct: loadDeduct(),
+    living: loadLiving(),
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -1307,6 +1311,10 @@ function restoreData(file) {
       txList = data.transactions;
       saveTx(txList);
       saveCustom(data.custom || { income: [], expense: [] });
+      if (data.fixed)     saveFixed(data.fixed);
+      if (data.irregular) saveIrr(data.irregular);
+      if (data.deduct)    saveDeduct(data.deduct);
+      if (data.living)    saveLiving(data.living);
       renderHome();
       toast('불러오기 완료!');
     } catch (err) {
