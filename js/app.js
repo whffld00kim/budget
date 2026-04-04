@@ -2,7 +2,7 @@
    상수 / 설정
 ============================================= */
 const DEFAULT_INCOME_ACCOUNTS  = ['개인연금', '보너스', '월급'];
-const DEFAULT_EXPENSE_ACCOUNTS = ['주식', '금', '개인연금', '대출금상환', '비과세연금', '생활비'];
+const DEFAULT_EXPENSE_ACCOUNTS = ['주식', '금', '개인연금', '대출금상환', '비과세연금', '생활비', 'ISA', '가상화폐'];
 const SUBJECTS = ['도연', '민성', '공통'];
 const MONTHS   = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 
@@ -25,6 +25,10 @@ function getColor(account, idx) {
 ============================================= */
 const STORAGE_TX  = 'gaegybu_final_tx_v3';
 const STORAGE_CUS = 'gaegybu_final_custom_v3';
+const STORAGE_FIXED = 'gaegybu_final_fixed_v1';
+const STORAGE_IRR = 'gaegybu_irregular_v1';
+const STORAGE_DEDUCT = 'gaegybu_deduct_v1';
+const STORAGE_LIVING = 'gaegybu_living_v1';
 
 /* =============================================
    초기 데이터 (최초 1회만 로드)
@@ -89,6 +93,83 @@ const INIT_TX = [
 
 const INIT_CUSTOM = { income: ['기타'], expense: ['개별주식', '기타'] };
 
+const INIT_FIXED = [
+  { id:'f01', type:'income',  account:'개인연금',  subject:'민성', description:'민성 개인연금(월급)', amount:505200  },
+  { id:'f02', type:'income',  account:'개인연금',  subject:'도연', description:'도연 개인연금(월급)', amount:546820  },
+  { id:'f03', type:'expense', account:'개인연금',  subject:'-',    description:'민성 개인연금(월급)', amount:505200  },
+  { id:'f04', type:'expense', account:'개인연금',  subject:'-',    description:'도연 개인연금(월급)', amount:546820  },
+  { id:'f05', type:'expense', account:'비과세연금',subject:'-',    description:'도연비과세연금',       amount:300000  },
+  { id:'f06', type:'expense', account:'개인연금',  subject:'-',    description:'도연개인연금',         amount:50000   },
+  { id:'f07', type:'expense', account:'생활비',    subject:'-',    description:'매월생활비',           amount:5000000 },
+  { id:'f08', type:'expense', account:'대출금상환',subject:'-',    description:'전세대출상환',         amount:187000  },
+  { id:'f09', type:'expense', account:'비과세연금',subject:'-',    description:'민성비과세연금',       amount:300000  },
+  { id:'f10', type:'expense', account:'ISA',       subject:'-',    description:'ISA 납입',             amount:4563000 },
+  { id:'f11', type:'expense', account:'금',        subject:'-',    description:'금현물',               amount:253500  },
+  { id:'f12', type:'expense', account:'개별주식',  subject:'-',    description:'하이닉스',             amount:0       },
+  { id:'f13', type:'expense', account:'개별주식',  subject:'-',    description:'테슬라',               amount:253500  },
+  { id:'f14', type:'expense', account:'가상화폐',  subject:'-',    description:'비트코인',             amount:253500  },
+];
+
+const INIT_IRREGULAR = {
+  categories: [
+    { id:'ic1', name:'명절',          budget:2000000 },
+    { id:'ic2', name:'가족행사',      budget:2000000 },
+    { id:'ic3', name:'자동차',        budget:2000000 },
+    { id:'ic4', name:'여행',          budget:3500000 },
+    { id:'ic5', name:'의류/미용',     budget:3500000 },
+    { id:'ic6', name:'경조사',        budget:1000000 },
+    { id:'ic7', name:'기타',          budget:4000000 },
+    { id:'ic8', name:'도연이복직선물',budget:2000000 },
+  ],
+  entries: [
+    { id:'ie01', catId:'ic1', year:2026, month:1, amount:215300,  note:'' },
+    { id:'ie02', catId:'ic3', year:2026, month:1, amount:1217599, note:'' },
+    { id:'ie03', catId:'ic4', year:2026, month:1, amount:389997,  note:'' },
+    { id:'ie04', catId:'ic5', year:2026, month:1, amount:136000,  note:'' },
+    { id:'ie05', catId:'ic6', year:2026, month:1, amount:1043272, note:'' },
+    { id:'ie06', catId:'ic7', year:2026, month:1, amount:281410,  note:'' },
+    { id:'ie07', catId:'ic1', year:2026, month:2, amount:638080,  note:'' },
+    { id:'ie08', catId:'ic5', year:2026, month:2, amount:143023,  note:'' },
+    { id:'ie09', catId:'ic6', year:2026, month:2, amount:50000,   note:'' },
+    { id:'ie10', catId:'ic7', year:2026, month:2, amount:393648,  note:'' },
+    { id:'ie11', catId:'ic7', year:2026, month:3, amount:233000,  note:'' },
+  ]
+};
+
+const INIT_DEDUCT = {
+  accounts: [
+    { id:'da1', name:'도연통장', items:[
+      { id:'di1', name:'도연,도겸 보험비',      amount:170745, day:21 },
+      { id:'di2', name:'도연 모임회비',          amount:20000,  day:21 },
+      { id:'di3', name:'도연이 용돈',            amount:300000, day:21 },
+      { id:'di4', name:'도연 연금저축(새마을)', amount:50000,  day:21 },
+      { id:'di5', name:'도연 비과세연금',        amount:300000, day:21 },
+    ]},
+    { id:'da2', name:'민성통장', items:[
+      { id:'di6', name:'민성 비과세연금', amount:300000, day:25 },
+      { id:'di7', name:'롯데손해보험',    amount:31793,  day:25 },
+    ]},
+  ]
+};
+
+const INIT_LIVING = {
+  accounts: [
+    { id:'la1', name:'도연통장', items:[
+      { id:'li1', name:'도연,도겸 보험비', amount:170745 },
+      { id:'li2', name:'도연 모임회비',    amount:20000  },
+      { id:'li3', name:'도연이 용돈',      amount:300000 },
+    ]},
+    { id:'la2', name:'민성통장', items:[
+      { id:'li4', name:'전세대출 이자',  amount:39260 },
+      { id:'li5', name:'롯데손해보험',   amount:31793 },
+    ]},
+  ],
+  cards:[
+    { id:'lc1', name:'또리 현대카드', amount:1170896 },
+    { id:'lc2', name:'또리 국민카드', amount:797910  },
+  ]
+};
+
 function loadTx() {
   try {
     const raw = localStorage.getItem(STORAGE_TX);
@@ -116,6 +197,46 @@ function loadCustom() {
 }
 function saveCustom(obj) { localStorage.setItem(STORAGE_CUS, JSON.stringify(obj)); }
 
+function loadFixed() {
+  try {
+    const raw = localStorage.getItem(STORAGE_FIXED);
+    if (!raw) { const d = [...INIT_FIXED]; saveFixed(d); return d; }
+    return JSON.parse(raw);
+  } catch { return [...INIT_FIXED]; }
+}
+function saveFixed(list) {
+  try { localStorage.setItem(STORAGE_FIXED, JSON.stringify(list)); } catch(e) {}
+}
+
+function loadIrr() {
+  try {
+    const raw = localStorage.getItem(STORAGE_IRR);
+    if (!raw) { const d = JSON.parse(JSON.stringify(INIT_IRREGULAR)); saveIrr(d); return d; }
+    return JSON.parse(raw);
+  } catch { return JSON.parse(JSON.stringify(INIT_IRREGULAR)); }
+}
+function saveIrr(data) {
+  try { localStorage.setItem(STORAGE_IRR, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadDeduct() {
+  try {
+    const raw = localStorage.getItem(STORAGE_DEDUCT);
+    if (!raw) { const d = JSON.parse(JSON.stringify(INIT_DEDUCT)); saveDeduct(d); return d; }
+    return JSON.parse(raw);
+  } catch { return JSON.parse(JSON.stringify(INIT_DEDUCT)); }
+}
+function saveDeduct(data) { try { localStorage.setItem(STORAGE_DEDUCT, JSON.stringify(data)); } catch(e) {} }
+
+function loadLiving() {
+  try {
+    const raw = localStorage.getItem(STORAGE_LIVING);
+    if (!raw) { const d = JSON.parse(JSON.stringify(INIT_LIVING)); saveLiving(d); return d; }
+    return JSON.parse(raw);
+  } catch { return JSON.parse(JSON.stringify(INIT_LIVING)); }
+}
+function saveLiving(data) { try { localStorage.setItem(STORAGE_LIVING, JSON.stringify(data)); } catch(e) {} }
+
 function getIncomeAccounts()  { return [...DEFAULT_INCOME_ACCOUNTS,  ...loadCustom().income];  }
 function getExpenseAccounts() { return [...DEFAULT_EXPENSE_ACCOUNTS, ...loadCustom().expense]; }
 
@@ -130,6 +251,12 @@ function addCustomAccount(type, name) {
    앱 상태
 ============================================= */
 let txList = [];
+let fixedList = [];
+let addingFixed = false;
+let irrData = { categories: [], entries: [] };
+let irrYear = new Date().getFullYear();
+let deductData = { accounts: [] };
+let livingData = { accounts: [], cards: [] };
 let viewYear  = new Date().getFullYear();
 let viewMonth = new Date().getMonth() + 1; // 1-indexed
 
@@ -187,6 +314,9 @@ function goPage(name) {
   if (name === 'home')    renderHome();
   if (name === 'history') renderHistory();
   if (name === 'stats')   renderStats();
+  if (name === 'fixed')     renderFixed();
+  if (name === 'irregular') renderIrregular();
+  if (name === 'transfer') renderTransfer();
 }
 
 function changeMonth(delta) {
@@ -667,6 +797,16 @@ function saveTransaction() {
     toast('저장되었습니다');
   }
 
+  if (addingFixed) {
+    addingFixed = false;
+    fixedList.push({ id: uid(), type: formType, account: formAccount, subject: formSubject, description: desc, amount });
+    saveFixed(fixedList);
+    closeModal();
+    renderFixed();
+    toast('고정 항목이 추가되었습니다');
+    return;
+  }
+
   saveTx(txList);
   closeModal();
 
@@ -681,6 +821,457 @@ function saveTransaction() {
 ============================================= */
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* =============================================
+   고정 항목 렌더링
+============================================= */
+function renderFixed() {
+  const container = document.getElementById('fixed-list');
+  if (!container) return;
+
+  if (fixedList.length === 0) {
+    container.innerHTML = '<div class="empty-state"><p>📋</p><p>고정 항목이 없습니다</p></div>';
+    return;
+  }
+
+  container.innerHTML = fixedList.map(item => {
+    const typeLabel = item.type === 'income' ? '입금' : '출금';
+    const typeClass = item.type === 'income' ? 'inc' : 'exp';
+    const amtDisplay = item.amount > 0 ? item.amount.toLocaleString('ko-KR') : '금액 미입력';
+    const amtClass = item.amount === 0 ? 'fixed-amt-empty' : '';
+    const subj = item.subject === '-'
+      ? '<span class="badge badge-dash">-</span>'
+      : `<span class="badge badge-${item.subject}">${item.subject}</span>`;
+    return `
+      <div class="fixed-item">
+        <div class="fixed-type-badge ${typeClass}">${typeLabel}</div>
+        <div class="fixed-info">
+          <div class="fixed-row1">
+            <span class="fixed-account">${item.account}</span>
+            ${subj}
+          </div>
+          <div class="fixed-desc">${item.description}</div>
+        </div>
+        <div class="fixed-right">
+          <div class="fixed-amt ${amtClass}" data-id="${item.id}">${amtDisplay}</div>
+          <button class="fixed-del-btn" data-id="${item.id}">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('.fixed-amt').forEach(el => {
+    el.addEventListener('click', () => {
+      const item = fixedList.find(f => f.id === el.dataset.id);
+      if (!item) return;
+      const val = prompt(`"${item.description}" 금액을 입력하세요:`, item.amount > 0 ? item.amount : '');
+      if (val === null) return;
+      const amt = Math.floor(+val.replace(/,/g, ''));
+      if (isNaN(amt) || amt < 0) { toast('올바른 금액을 입력하세요'); return; }
+      item.amount = amt;
+      saveFixed(fixedList);
+      renderFixed();
+    });
+  });
+
+  container.querySelectorAll('.fixed-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('이 항목을 삭제할까요?')) return;
+      fixedList = fixedList.filter(f => f.id !== btn.dataset.id);
+      saveFixed(fixedList);
+      renderFixed();
+    });
+  });
+}
+
+/* =============================================
+   비정기 현황 렌더링
+============================================= */
+function renderIrregular() {
+  const yearEntries = irrData.entries.filter(e => e.year === irrYear);
+  const totalBudget = irrData.categories.reduce((s, c) => s + c.budget, 0);
+  const totalSpent  = yearEntries.reduce((s, e) => s + e.amount, 0);
+  const totalLeft   = totalBudget - totalSpent;
+
+  // 연도 표시
+  const yearEl = document.getElementById('irr-year');
+  if (yearEl) yearEl.textContent = irrYear + '년';
+
+  // 요약 카드
+  const summaryEl = document.getElementById('irr-summary');
+  if (summaryEl) {
+    const pct = totalBudget > 0 ? Math.min(100, Math.round(totalSpent / totalBudget * 100)) : 0;
+    const leftColor = totalLeft >= 0 ? 'var(--income)' : 'var(--expense)';
+    summaryEl.innerHTML = `
+      <div class="irr-sum-row">
+        <div class="irr-sum-item"><div class="irr-sum-label">연간예산</div><div class="irr-sum-val">${fmt(totalBudget)}</div></div>
+        <div class="irr-sum-item"><div class="irr-sum-label">사용</div><div class="irr-sum-val" style="color:var(--expense)">${fmt(totalSpent)}</div></div>
+        <div class="irr-sum-item"><div class="irr-sum-label">잔액</div><div class="irr-sum-val" style="color:${leftColor}">${fmt(totalLeft)}</div></div>
+      </div>
+      <div class="irr-progress-bar"><div class="irr-progress-fill" style="width:${pct}%"></div></div>
+      <div class="irr-pct-label">${pct}% 사용</div>`;
+  }
+
+  // 카테고리 목록
+  const listEl = document.getElementById('irr-cat-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = irrData.categories.map(cat => {
+    const catEntries = yearEntries.filter(e => e.catId === cat.id);
+    const spent = catEntries.reduce((s, e) => s + e.amount, 0);
+    const left  = cat.budget - spent;
+    const pct   = cat.budget > 0 ? Math.min(100, Math.round(spent / cat.budget * 100)) : 0;
+    const leftColor = left >= 0 ? 'var(--income)' : 'var(--expense)';
+
+    const entriesHtml = catEntries.length === 0
+      ? '<div class="irr-no-entry">입력된 내역이 없습니다</div>'
+      : catEntries.sort((a,b) => a.month - b.month).map(e => `
+          <div class="irr-entry">
+            <span class="irr-entry-month">${e.month}월</span>
+            <span class="irr-entry-note">${e.note || ''}</span>
+            <span class="irr-entry-amt">${e.amount.toLocaleString('ko-KR')}</span>
+            <button class="irr-entry-del" data-eid="${e.id}">✕</button>
+          </div>`).join('');
+
+    return `
+      <div class="irr-cat-card" data-cid="${cat.id}">
+        <div class="irr-cat-header" data-cid="${cat.id}">
+          <div class="irr-cat-left">
+            <span class="irr-cat-name">${cat.name}</span>
+            <span class="irr-cat-budget">${fmt(cat.budget)}</span>
+          </div>
+          <div class="irr-cat-right">
+            <span class="irr-cat-left-amt" style="color:${leftColor}">${left >= 0 ? '' : '-'}${fmt(left)}</span>
+            <span class="irr-cat-arrow">▾</span>
+          </div>
+        </div>
+        <div class="irr-cat-bar"><div class="irr-cat-fill" style="width:${pct}%"></div></div>
+        <div class="irr-cat-body hidden" data-body="${cat.id}">
+          <div class="irr-entry-list">${entriesHtml}</div>
+          <div class="irr-add-row">
+            <select class="irr-month-sel" data-cid="${cat.id}">
+              ${MONTHS.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}
+            </select>
+            <input type="number" class="irr-amt-input" placeholder="금액" data-cid="${cat.id}" />
+            <input type="text" class="irr-note-input" placeholder="메모(선택)" data-cid="${cat.id}" />
+            <button class="irr-add-btn" data-cid="${cat.id}">추가</button>
+          </div>
+          <div class="irr-cat-footer">
+            <button class="irr-budget-btn" data-cid="${cat.id}">예산 수정</button>
+            <button class="irr-del-cat-btn" data-cid="${cat.id}">카테고리 삭제</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // 아코디언 토글
+  listEl.querySelectorAll('.irr-cat-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const body = listEl.querySelector(`[data-body="${header.dataset.cid}"]`);
+      const arrow = header.querySelector('.irr-cat-arrow');
+      if (!body) return;
+      body.classList.toggle('hidden');
+      arrow.textContent = body.classList.contains('hidden') ? '▾' : '▴';
+    });
+  });
+
+  // 항목 삭제
+  listEl.querySelectorAll('.irr-entry-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!confirm('이 항목을 삭제할까요?')) return;
+      irrData.entries = irrData.entries.filter(en => en.id !== btn.dataset.eid);
+      saveIrr(irrData);
+      renderIrregular();
+    });
+  });
+
+  // 지출 추가
+  listEl.querySelectorAll('.irr-add-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cid = btn.dataset.cid;
+      const monthEl = listEl.querySelector(`.irr-month-sel[data-cid="${cid}"]`);
+      const amtEl   = listEl.querySelector(`.irr-amt-input[data-cid="${cid}"]`);
+      const noteEl  = listEl.querySelector(`.irr-note-input[data-cid="${cid}"]`);
+      const amt = Math.floor(+amtEl.value.replace(/,/g,''));
+      if (!amt || amt <= 0) { toast('금액을 입력하세요'); return; }
+      irrData.entries.push({ id: 'ie' + Date.now(), catId: cid, year: irrYear, month: +monthEl.value, amount: amt, note: noteEl.value.trim() });
+      saveIrr(irrData);
+      renderIrregular();
+    });
+  });
+
+  // 예산 수정
+  listEl.querySelectorAll('.irr-budget-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cat = irrData.categories.find(c => c.id === btn.dataset.cid);
+      if (!cat) return;
+      const val = prompt(`"${cat.name}" 예산을 입력하세요:`, cat.budget);
+      if (val === null) return;
+      const newBudget = Math.floor(+val.replace(/,/g,''));
+      if (isNaN(newBudget) || newBudget < 0) { toast('올바른 금액을 입력하세요'); return; }
+      cat.budget = newBudget;
+      saveIrr(irrData);
+      renderIrregular();
+    });
+  });
+
+  // 카테고리 삭제
+  listEl.querySelectorAll('.irr-del-cat-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const cat = irrData.categories.find(c => c.id === btn.dataset.cid);
+      if (!cat) return;
+      if (!confirm(`"${cat.name}" 카테고리와 모든 내역을 삭제할까요?`)) return;
+      irrData.categories = irrData.categories.filter(c => c.id !== btn.dataset.cid);
+      irrData.entries    = irrData.entries.filter(e => e.catId !== btn.dataset.cid);
+      saveIrr(irrData);
+      renderIrregular();
+    });
+  });
+}
+
+/* =============================================
+   이체계산 렌더링
+============================================= */
+function renderTransfer() {
+
+  /* ── 섹션 1: 부칠돈에서 뺄 돈 ── */
+  const deductEl = document.getElementById('deduct-list');
+  if (deductEl) {
+    const grandTotal = deductData.accounts.reduce((s, acc) =>
+      s + acc.items.reduce((a, it) => a + it.amount, 0), 0);
+
+    deductEl.innerHTML = `
+      <div class="tr-section-title">부칠돈에서 뺄 돈
+        <span class="tr-section-total">${grandTotal.toLocaleString('ko-KR')}</span>
+      </div>` +
+      deductData.accounts.map(acc => {
+        const accTotal = acc.items.reduce((s, it) => s + it.amount, 0);
+        return `
+        <div class="tr-acc-card">
+          <div class="tr-acc-header">
+            <span class="tr-acc-name">${acc.name}</span>
+            <span class="tr-acc-total">${accTotal.toLocaleString('ko-KR')}</span>
+          </div>
+          ${acc.items.map(it => `
+            <div class="tr-item">
+              <span class="tr-item-name">${it.name}</span>
+              <span class="tr-item-day">${it.day}일</span>
+              <span class="tr-item-amt" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+            </div>`).join('')}
+          <div class="tr-add-row">
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="deduct" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="deduct" />
+            <input class="tr-input tr-input-xs" type="number" placeholder="일" data-add-day data-aid="${acc.id}" data-sec="deduct" />
+            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="deduct">추가</button>
+          </div>
+        </div>`;
+      }).join('') +
+      `<button class="tr-add-acc-btn" data-sec="deduct">+ 통장 추가</button>`;
+  }
+
+  /* ── 섹션 2: 생활비 이체금액 계산 ── */
+  const livingEl = document.getElementById('living-list');
+  if (livingEl) {
+    const accTotal  = livingData.accounts.reduce((s, acc) =>
+      s + acc.items.reduce((a, it) => a + it.amount, 0), 0);
+    const cardTotal = livingData.cards.reduce((s, c) => s + c.amount, 0);
+    const transfer  = accTotal + cardTotal;
+
+    livingEl.innerHTML = `
+      <div class="tr-section-title">생활비 이체금액 계산</div>` +
+      livingData.accounts.map(acc => {
+        const accSum = acc.items.reduce((s, it) => s + it.amount, 0);
+        return `
+        <div class="tr-acc-card">
+          <div class="tr-acc-header">
+            <span class="tr-acc-name">${acc.name}</span>
+            <span class="tr-acc-total">${accSum.toLocaleString('ko-KR')}</span>
+          </div>
+          ${acc.items.map(it => `
+            <div class="tr-item">
+              <span class="tr-item-name">${it.name}</span>
+              <span class="tr-item-day"></span>
+              <span class="tr-item-amt" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+            </div>`).join('')}
+          <div class="tr-add-row">
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="living" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="living" />
+            <div></div>
+            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="living">추가</button>
+          </div>
+        </div>`;
+      }).join('') +
+      `<button class="tr-add-acc-btn" data-sec="living">+ 통장 추가</button>
+       <div class="tr-acc-card" style="margin-top:8px">
+         <div class="tr-acc-header"><span class="tr-acc-name">카드 청구액</span><span class="tr-acc-total">${cardTotal.toLocaleString('ko-KR')}</span></div>
+         ${livingData.cards.map(c => `
+           <div class="tr-item">
+             <span class="tr-item-name">${c.name}</span>
+             <span class="tr-item-day"></span>
+             <span class="tr-item-amt tr-card-amt" data-cid="${c.id}">${c.amount.toLocaleString('ko-KR')}</span>
+             <button class="tr-card-del" data-cid="${c.id}">✕</button>
+           </div>`).join('')}
+         <div class="tr-add-row">
+           <input class="tr-input" placeholder="카드명" id="new-card-name" />
+           <input class="tr-input tr-input-sm" type="number" placeholder="금액" id="new-card-amt" />
+           <div></div>
+           <button class="tr-add-btn" id="btn-add-card">추가</button>
+         </div>
+       </div>
+       <div class="tr-result-card">
+         <div class="tr-result-row">
+           <span>항목 합계</span><span>${accTotal.toLocaleString('ko-KR')}</span>
+         </div>
+         <div class="tr-result-row">
+           <span>카드 합계</span><span>${cardTotal.toLocaleString('ko-KR')}</span>
+         </div>
+         <div class="tr-result-row tr-result-total">
+           <span>생활비통장 이체금액</span>
+           <span style="color:var(--expense)">-${transfer.toLocaleString('ko-KR')}</span>
+         </div>
+       </div>`;
+  }
+
+  // ── 이벤트 바인딩 ──
+
+  // 금액 탭해서 수정
+  document.querySelectorAll('.tr-item-amt').forEach(el => {
+    el.addEventListener('click', () => {
+      const { sec, aid, iid } = el.dataset;
+      const data = sec === 'deduct' ? deductData : livingData;
+      const acc  = data.accounts.find(a => a.id === aid);
+      const item = acc?.items.find(i => i.id === iid);
+      if (!item) return;
+      const val = prompt(`"${item.name}" 금액:`, item.amount);
+      if (val === null) return;
+      const amt = Math.floor(+val.replace(/,/g,''));
+      if (isNaN(amt) || amt < 0) { toast('올바른 금액을 입력하세요'); return; }
+      item.amount = amt;
+      sec === 'deduct' ? saveDeduct(deductData) : saveLiving(livingData);
+      renderTransfer();
+    });
+  });
+
+  // 카드 금액 수정
+  document.querySelectorAll('.tr-card-amt').forEach(el => {
+    el.addEventListener('click', () => {
+      const card = livingData.cards.find(c => c.id === el.dataset.cid);
+      if (!card) return;
+      const val = prompt(`"${card.name}" 청구액:`, card.amount);
+      if (val === null) return;
+      const amt = Math.floor(+val.replace(/,/g,''));
+      if (isNaN(amt) || amt < 0) { toast('올바른 금액을 입력하세요'); return; }
+      card.amount = amt;
+      saveLiving(livingData);
+      renderTransfer();
+    });
+  });
+
+  // 항목 삭제
+  document.querySelectorAll('.tr-item-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('삭제할까요?')) return;
+      const { sec, aid, iid } = btn.dataset;
+      const data = sec === 'deduct' ? deductData : livingData;
+      const acc  = data.accounts.find(a => a.id === aid);
+      if (acc) acc.items = acc.items.filter(i => i.id !== iid);
+      sec === 'deduct' ? saveDeduct(deductData) : saveLiving(livingData);
+      renderTransfer();
+    });
+  });
+
+  // 카드 삭제
+  document.querySelectorAll('.tr-card-del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('삭제할까요?')) return;
+      livingData.cards = livingData.cards.filter(c => c.id !== btn.dataset.cid);
+      saveLiving(livingData);
+      renderTransfer();
+    });
+  });
+
+  // 항목 추가
+  document.querySelectorAll('.tr-add-btn:not(#btn-add-card)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { aid, sec } = btn.dataset;
+      const data = sec === 'deduct' ? deductData : livingData;
+      const acc  = data.accounts.find(a => a.id === aid);
+      if (!acc) return;
+      const nameEl = document.querySelector(`[data-add-name][data-aid="${aid}"][data-sec="${sec}"]`);
+      const amtEl  = document.querySelector(`[data-add-amt][data-aid="${aid}"][data-sec="${sec}"]`);
+      const dayEl  = document.querySelector(`[data-add-day][data-aid="${aid}"][data-sec="${sec}"]`);
+      const name = nameEl?.value.trim();
+      const amt  = Math.floor(+amtEl?.value);
+      if (!name) { toast('항목명을 입력하세요'); return; }
+      if (!amt || amt <= 0) { toast('금액을 입력하세요'); return; }
+      const newItem = { id: 'i'+Date.now(), name, amount: amt };
+      if (dayEl) newItem.day = +dayEl.value || 0;
+      acc.items.push(newItem);
+      sec === 'deduct' ? saveDeduct(deductData) : saveLiving(livingData);
+      renderTransfer();
+    });
+  });
+
+  // 카드 추가
+  const addCardBtn = document.getElementById('btn-add-card');
+  if (addCardBtn) {
+    addCardBtn.addEventListener('click', () => {
+      const name = document.getElementById('new-card-name')?.value.trim();
+      const amt  = Math.floor(+(document.getElementById('new-card-amt')?.value));
+      if (!name) { toast('카드명을 입력하세요'); return; }
+      if (!amt || amt <= 0) { toast('금액을 입력하세요'); return; }
+      livingData.cards.push({ id: 'lc'+Date.now(), name, amount: amt });
+      saveLiving(livingData);
+      renderTransfer();
+    });
+  }
+
+  // 통장 추가
+  document.querySelectorAll('.tr-add-acc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = prompt('통장 이름:');
+      if (!name?.trim()) return;
+      const newAcc = { id: 'a'+Date.now(), name: name.trim(), items: [] };
+      btn.dataset.sec === 'deduct'
+        ? (deductData.accounts.push(newAcc), saveDeduct(deductData))
+        : (livingData.accounts.push(newAcc), saveLiving(livingData));
+      renderTransfer();
+    });
+  });
+}
+
+function applyFixedToMonth() {
+  const emptyItems = fixedList.filter(f => f.amount === 0);
+  const validItems = fixedList.filter(f => f.amount > 0);
+
+  if (validItems.length === 0) { toast('입력할 항목이 없습니다'); return; }
+
+  let msg = `${validItems.length}개 항목을 오늘 날짜로 입력합니다.`;
+  if (emptyItems.length > 0) msg += `\n(금액 미입력 ${emptyItems.length}개 제외)`;
+
+  const dateStr = today();
+  const [y, m] = dateStr.split('-').map(Number);
+  const existingDescs = monthTxs(y, m).map(t => t.description);
+  const dups = validItems.filter(f => existingDescs.includes(f.description));
+  if (dups.length > 0) {
+    msg += `\n\n⚠️ 이미 입력된 항목 ${dups.length}개도 포함됩니다.`;
+  }
+
+  if (!confirm(msg + '\n\n계속할까요?')) return;
+
+  validItems.forEach(item => {
+    txList.push({ id: uid(), date: dateStr, type: item.type, account: item.account, subject: item.subject, description: item.description, amount: item.amount });
+  });
+
+  saveTx(txList);
+  toast(`✅ ${validItems.length}개 항목이 입력되었습니다`);
+  goPage('home');
 }
 
 /* =============================================
@@ -730,6 +1321,10 @@ function restoreData(file) {
 ============================================= */
 document.addEventListener('DOMContentLoaded', () => {
   txList = loadTx();
+  fixedList = loadFixed();
+  irrData = loadIrr();
+  deductData = loadDeduct();
+  livingData = loadLiving();
   updateMonthLabels();
 
   // 페이지 네비게이션
@@ -773,6 +1368,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // 홈 – 전체보기
   document.getElementById('btn-see-all').addEventListener('click', () => goPage('history'));
 
+  // 내역 – 전체 삭제
+  document.getElementById('btn-delete-all').addEventListener('click', () => {
+    const txs = monthTxs(viewYear, viewMonth);
+    if (txs.length === 0) { toast('삭제할 내역이 없습니다'); return; }
+    if (!confirm(`${viewYear}년 ${MONTHS[viewMonth-1]} 내역 ${txs.length}건을 모두 삭제할까요?`)) return;
+    const ids = new Set(txs.map(t => t.id));
+    txList = txList.filter(t => !ids.has(t.id));
+    saveTx(txList);
+    renderHistory();
+    toast(`${txs.length}건 삭제되었습니다`);
+  });
+
   // 홈 – 총 수입/지출 클릭 시 내역 탭으로 이동 + 필터 적용
   document.querySelector('.income-item').addEventListener('click', () => {
     histTypeFilter = 'income';
@@ -797,6 +1404,28 @@ document.addEventListener('DOMContentLoaded', () => {
     e.target.value = '';
   });
 
+  // 고정 탭 이벤트
+  document.getElementById('btn-add-fixed').addEventListener('click', () => {
+    addingFixed = true;
+    openAddModal();
+  });
+  document.getElementById('btn-apply-fixed').addEventListener('click', applyFixedToMonth);
+
+  // 비정기 탭 이벤트
+  document.getElementById('irr-prev').addEventListener('click', () => { irrYear--; renderIrregular(); });
+  document.getElementById('irr-next').addEventListener('click', () => { irrYear++; renderIrregular(); });
+  document.getElementById('btn-add-irr-cat').addEventListener('click', () => {
+    const name = prompt('새 카테고리 이름:');
+    if (!name || !name.trim()) return;
+    const budgetStr = prompt(`"${name.trim()}" 연간 예산 금액:`);
+    if (budgetStr === null) return;
+    const budget = Math.floor(+budgetStr.replace(/,/g,''));
+    if (isNaN(budget) || budget < 0) { toast('올바른 금액을 입력하세요'); return; }
+    irrData.categories.push({ id: 'ic' + Date.now(), name: name.trim(), budget });
+    saveIrr(irrData);
+    renderIrregular();
+  });
+
   // 모달 닫기
   document.getElementById('modal-close').addEventListener('click',    closeModal);
   document.getElementById('modal-backdrop').addEventListener('click', closeModal);
@@ -809,11 +1438,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (active?.id === 'page-home')    renderHome();
       if (active?.id === 'page-history') renderHistory();
       if (active?.id === 'page-stats')   renderStats();
+      if (active?.id === 'page-fixed')     renderFixed();
+      if (active?.id === 'page-irregular') renderIrregular();
+      if (active?.id === 'page-transfer') renderTransfer();
     }
   });
 
   // 스와이프로 탭 이동 (좌→우: 이전 탭, 우→좌: 다음 탭)
-  const PAGES = ['home', 'history', 'stats'];
+  const PAGES = ['home', 'history', 'stats', 'fixed', 'irregular', 'transfer'];
   let touchStartX = 0;
   let touchStartY = 0;
   document.getElementById('app').addEventListener('touchstart', e => {
@@ -826,8 +1458,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // 짧은 터치 or 세로 스크롤 무시
     const activePage = document.querySelector('.page.active')?.id.replace('page-', '');
     const idx = PAGES.indexOf(activePage);
-    if (dx < 0 && idx < PAGES.length - 1) goPage(PAGES[idx + 1]); // 오른쪽→왼쪽: 다음 탭
-    if (dx > 0 && idx > 0)                goPage(PAGES[idx - 1]); // 왼쪽→오른쪽: 이전 탭
+    if (dx < 0) goPage(PAGES[(idx + 1) % PAGES.length]);             // 오른쪽→왼쪽: 다음 탭 (순환)
+    if (dx > 0) goPage(PAGES[(idx - 1 + PAGES.length) % PAGES.length]); // 왼쪽→오른쪽: 이전 탭 (순환)
   }, { passive: true });
 
   // 초기 렌더
