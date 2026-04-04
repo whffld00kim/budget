@@ -938,7 +938,8 @@ input  { font-family: inherit; }
 
 .irr-add-row {
   display: grid;
-  grid-template-columns: 56px 1fr 1fr auto;
+  grid-template-columns: 72px 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 6px;
   margin-top: 10px;
   align-items: center;
@@ -954,6 +955,7 @@ input  { font-family: inherit; }
   color: var(--text1);
 }
 .irr-add-btn {
+  grid-column: 1 / -1;
   background: var(--primary);
   color: #fff;
   font-size: 13px;
