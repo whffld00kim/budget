@@ -1,4 +1,4 @@
-const CACHE = 'gaegybu-v20260405';
+const CACHE = 'gaegybu-v20260406';
 const ASSETS = ['./', './index.html', './css/style.css', './js/app.js', './manifest.json'];
 
 // 설치: 핵심 파일 캐시
