@@ -938,11 +938,13 @@ input  { font-family: inherit; }
 
 .irr-add-row {
   display: grid;
-  grid-template-columns: 72px 1fr 1fr;
-  grid-template-rows: auto auto;
+  grid-template-columns: 80px 1fr;
   gap: 6px;
   margin-top: 10px;
   align-items: center;
+}
+.irr-note-input {
+  grid-column: 1 / -1;
 }
 .irr-month-sel,
 .irr-amt-input,
