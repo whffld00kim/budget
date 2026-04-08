@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20260406" />
+  <link rel="stylesheet" href="css/style.css?v=20260409" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -259,7 +259,18 @@
 <!-- ======== 토스트 ======== -->
 <div id="toast" class="toast hidden"></div>
 
-<script src="js/app.js?v=20260406"></script>
+<!-- ======== 잠금 화면 ======== -->
+<div id="lock-screen">
+  <div class="lock-wrap">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">우리집 가계부</div>
+    <div class="lock-sub">비밀번호를 입력하세요</div>
+    <input type="password" id="lock-input" class="lock-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="••••" />
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+
+<script src="js/app.js?v=20260409"></script>
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js');

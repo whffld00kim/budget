@@ -755,6 +755,65 @@ input  { font-family: inherit; }
 }
 .toast.hidden { display: none; }
 
+/* ============ 잠금 화면 ============ */
+#lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: linear-gradient(160deg, #5B4FCF 0%, #3a2fa8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#lock-screen.hidden { display: none; }
+.lock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 320px;
+  padding: 0 24px;
+}
+.lock-icon { font-size: 48px; margin-bottom: 4px; }
+.lock-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+.lock-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+}
+.lock-input {
+  width: 100%;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 12px;
+  padding: 14px 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  outline: none;
+  caret-color: #fff;
+}
+.lock-input::placeholder {
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 12px;
+}
+.lock-input:focus {
+  border-color: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.2);
+}
+.lock-error {
+  font-size: 13px;
+  color: #FCA5A5;
+  height: 18px;
+  font-weight: 600;
+}
+
 /* ============ 스크롤바 ============ */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
