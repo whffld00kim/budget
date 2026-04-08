@@ -1,4 +1,58 @@
 /* =============================================
+   잠금 화면
+============================================= */
+(function() {
+  const CORRECT = '0409';
+
+  function unlock() {
+    sessionStorage.setItem('unlocked', '1');
+    const ls = document.getElementById('lock-screen');
+    if (ls) ls.classList.add('hidden');
+  }
+
+  function initLock() {
+    // 이미 잠금 해제된 세션이면 바로 통과
+    if (sessionStorage.getItem('unlocked') === '1') {
+      const ls = document.getElementById('lock-screen');
+      if (ls) ls.classList.add('hidden');
+      return;
+    }
+
+    const inputEl = document.getElementById('lock-input');
+    const errorEl = document.getElementById('lock-error');
+    if (!inputEl) return;
+
+    // 자동 포커스
+    setTimeout(() => inputEl.focus(), 100);
+
+    inputEl.addEventListener('input', () => {
+      // 숫자만 허용
+      inputEl.value = inputEl.value.replace(/[^0-9]/g, '');
+      if (errorEl) errorEl.textContent = '';
+
+      if (inputEl.value.length === 4) {
+        if (inputEl.value === CORRECT) {
+          unlock();
+        } else {
+          if (errorEl) {
+            errorEl.textContent = '비밀번호가 틀렸습니다';
+            setTimeout(() => { errorEl.textContent = ''; }, 1500);
+          }
+          inputEl.value = '';
+          inputEl.focus();
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLock);
+  } else {
+    initLock();
+  }
+})();
+
+/* =============================================
    상수 / 설정
 ============================================= */
 const DEFAULT_INCOME_ACCOUNTS  = ['개인연금', '보너스', '월급'];
