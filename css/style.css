@@ -755,8 +755,8 @@ input  { font-family: inherit; }
 }
 .toast.hidden { display: none; }
 
-/* ============ 잠금 화면 ============ */
-#lock-screen {
+/* ============ 로그인 화면 (2026-08-20: 4자리 PIN → 구글 로그인) ============ */
+#auth-screen {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -765,53 +765,53 @@ input  { font-family: inherit; }
   align-items: center;
   justify-content: center;
 }
-#lock-screen.hidden { display: none; }
-.lock-wrap {
+#auth-screen.hidden { display: none; }
+.auth-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
   max-width: 320px;
   padding: 0 24px;
-}
-.lock-icon { font-size: 48px; margin-bottom: 4px; }
-.lock-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #fff;
-}
-.lock-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.7);
-}
-.lock-input {
-  width: 100%;
   text-align: center;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 12px;
+}
+.auth-icon { font-size: 48px; margin-bottom: 4px; }
+.auth-title { font-size: 22px; font-weight: 800; color: #fff; }
+.auth-sub { font-size: 14px; color: rgba(255,255,255,0.7); }
+.btn-google {
+  margin-top: 8px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   padding: 14px 16px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-radius: 16px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  outline: none;
-  caret-color: #fff;
+  border: none;
+  border-radius: 14px;
+  background: #fff;
+  color: #3c4043;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
 }
-.lock-input::placeholder {
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 12px;
-}
-.lock-input:focus {
-  border-color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.2);
-}
-.lock-error {
+.btn-google:active { transform: scale(0.98); }
+.auth-error {
   font-size: 13px;
   color: #FCA5A5;
-  height: 18px;
   font-weight: 600;
+  line-height: 1.5;
+  white-space: pre-line;   /* 권한 오류 때 uid를 줄바꿈해 보여준다 */
+  word-break: break-all;
+}
+.auth-status { font-size: 13px; color: rgba(255,255,255,0.75); min-height: 18px; }
+
+/* 로그아웃 버튼 — 백업/불러오기와 같은 줄에 둔다 */
+.backup-btn.signout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-sub);
 }
 
 /* ============ 스크롤바 ============ */

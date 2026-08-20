@@ -1,56 +1,9 @@
 /* =============================================
-   잠금 화면
+   인증은 js/cloud.js 로 옮겼다 (2026-08-20).
+   그전까지 이 자리에 4자리 PIN(하드코딩) 잠금 화면 코드가 있었다.
+   공개 저장소에 비밀번호가 그대로 노출돼 있었고 기기 간 동기화도 불가능해서,
+   구글 로그인 + Firebase RTDB 로 함께 교체했다. 되돌리지 말 것.
 ============================================= */
-(function() {
-  const CORRECT = ''; // (이력 정리로 제거됨)
-
-  function unlock() {
-    sessionStorage.setItem('unlocked', '1');
-    const ls = document.getElementById('lock-screen');
-    if (ls) ls.classList.add('hidden');
-  }
-
-  function initLock() {
-    // 이미 잠금 해제된 세션이면 바로 통과
-    if (sessionStorage.getItem('unlocked') === '1') {
-      const ls = document.getElementById('lock-screen');
-      if (ls) ls.classList.add('hidden');
-      return;
-    }
-
-    const inputEl = document.getElementById('lock-input');
-    const errorEl = document.getElementById('lock-error');
-    if (!inputEl) return;
-
-    // 자동 포커스
-    setTimeout(() => inputEl.focus(), 100);
-
-    inputEl.addEventListener('input', () => {
-      // 숫자만 허용
-      inputEl.value = inputEl.value.replace(/[^0-9]/g, '');
-      if (errorEl) errorEl.textContent = '';
-
-      if (inputEl.value.length === 4) {
-        if (inputEl.value === CORRECT) {
-          unlock();
-        } else {
-          if (errorEl) {
-            errorEl.textContent = '비밀번호가 틀렸습니다';
-            setTimeout(() => { errorEl.textContent = ''; }, 1500);
-          }
-          inputEl.value = '';
-          inputEl.focus();
-        }
-      }
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLock);
-  } else {
-    initLock();
-  }
-})();
 
 /* =============================================
    상수 / 설정
@@ -1256,13 +1209,23 @@ function restoreData(file) {
 /* =============================================
    이벤트 바인딩 (초기화)
 ============================================= */
-document.addEventListener('DOMContentLoaded', () => {
+let __eventsBound = false;
+
+// 2026-08-20: 구글 로그인 도입으로 초기화 시점이 바뀌었다.
+// 예전에는 DOMContentLoaded에 바로 붙었지만, 지금은 cloud.js가 클라우드 데이터를
+// localStorage에 써넣은 뒤 이 함수를 부른다 (로그인 전에는 앱을 그리지 않는다).
+// 다른 기기의 변경을 반영할 때 다시 불리므로, 이벤트 바인딩은 한 번만 한다.
+window.__initApp = function () {
   txList = loadTx();
   fixedList = loadFixed();
   irrData = loadIrr();
   deductData = loadDeduct();
   livingData = loadLiving();
   updateMonthLabels();
+
+  // 재호출이면 다시 그리기만 한다 (리스너를 두 번 붙이면 클릭이 두 번 먹는다)
+  if (__eventsBound) { renderHome(); return; }
+  __eventsBound = true;
 
   // 페이지 네비게이션
   document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
@@ -1401,4 +1364,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 초기 렌더
   renderHome();
-});
+};

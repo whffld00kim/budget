@@ -1,5 +1,5 @@
-const CACHE = 'gaegybu-v20260412';
-const ASSETS = ['./', './index.html', './css/style.css', './js/app.js', './manifest.json'];
+const CACHE = 'gaegybu-v20260820';
+const ASSETS = ['./', './index.html', './css/style.css', './js/app.js', './js/cloud.js', './manifest.json'];
 
 // 설치: 핵심 파일 캐시
 self.addEventListener('install', e => {
