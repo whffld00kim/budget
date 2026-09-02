@@ -29,8 +29,10 @@
 (function () {
   'use strict';
 
-  // 부부가계부와 같은 프로젝트. 가구 id = 가구장(김민성) uid — households/{hid} 컨벤션
-  const HID = 'CH15y6HUQlSvJJLH95VWK4d0YHl1';
+  // 가구 id는 코드에 두지 않는다 (2026-09-02). 로그인한 계정의 users/{uid}/householdId 에서
+  // 읽는다 — 부부가계부가 가입 때 써두는 값이다. 공개 저장소에 가구 id가 박혀 있으면
+  // 규칙의 빈틈과 합쳐져 남이 그 가구에 들어올 재료가 된다.
+  let HID = null;
 
   const firebaseConfig = {
     apiKey: 'AIzaSyAPXiob8XeDunXpDMsLod_TwClqg2JL260',
@@ -227,13 +229,18 @@
     auth.onAuthStateChanged(async user => {
       if (!user) { uid = null; ready = false; showAuth(); setStatus(''); return; }
       uid = user.uid;
-      ref = firebase.database().ref('home-ledger/' + HID);
       try {
+        const hidSnap = await firebase.database().ref('users/' + uid + '/householdId').get();
+        HID = hidSnap.val();
+        if (!HID) throw new Error('no-household');
+        ref = firebase.database().ref('home-ledger/' + HID);
         await start();
       } catch (e) {
         setStatus('');
         // 규칙에 걸리면 permission_denied. 가구 멤버가 아닌 계정으로 들어온 경우다.
-        if (String(e.message || '').toLowerCase().includes('permission')) {
+        if (e.message === 'no-household') {
+          setError(`이 계정은 어느 가구에도 속해 있지 않습니다.\n부부가계부 앱에서 초대코드로 먼저 참여해 주세요.\n로그인한 계정: ${user.email}`);
+        } else if (String(e.message || '').toLowerCase().includes('permission')) {
           setError(`이 계정은 가계부에 접근 권한이 없습니다.\n로그인한 계정: ${user.email}\nuid: ${user.uid}`);
         } else {
           setError('데이터를 불러오지 못했습니다: ' + (e.code || e.message));
