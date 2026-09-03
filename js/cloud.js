@@ -245,6 +245,7 @@
         } else {
           setError('데이터를 불러오지 못했습니다: ' + (e.code || e.message));
         }
+        clearLocal();
         await auth.signOut();
       }
     });
@@ -258,8 +259,18 @@
     if (out) out.addEventListener('click', async () => {
       if (pushTimer) { clearTimeout(pushTimer); await push(); }   // 대기 중 저장은 먼저 올린다
       await auth.signOut();
+      clearLocal();
       location.reload();
     });
+  }
+
+  // 로그아웃·접근 거부 때 이 기기의 가계부 캐시를 지운다 (S12, 2026-09-03).
+  // 안 지우면 다음 사람이 같은 브라우저에서 로그인 화면 뒤의 localStorage를 볼 수 있다.
+  // ⚠ push()가 끝난 뒤에만 부를 것 — 올리기 전에 지우면 마지막 편집이 사라진다.
+  function clearLocal() {
+    for (const key of Object.values(KEYS)) {
+      try { localStorage.removeItem(key); } catch {}
+    }
   }
 
   if (document.readyState === 'loading') {

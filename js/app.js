@@ -312,12 +312,12 @@ function txItem(tx) {
     <div class="tx-dot ${isInc?'inc':'exp'}">${isInc?'↑':'↓'}</div>
     <div class="tx-info">
       <div class="tx-top">
-        <span class="tx-account">${tx.account}</span>
-        <span class="tx-badge ${tx.subject==='-'?'badge-dash':`badge-${tx.subject}`}">${tx.subject}</span>
+        <span class="tx-account">${escHtml(tx.account)}</span>
+        <span class="tx-badge ${tx.subject==='-'?'badge-dash':`badge-${escHtml(tx.subject)}`}">${escHtml(tx.subject)}</span>
       </div>
       <div class="tx-sub">
         <span class="tx-date">${fmtDate(tx.date)}</span>
-        ${tx.description ? `<span class="tx-date">·</span><span class="tx-desc">${tx.description}</span>` : ''}
+        ${tx.description ? `<span class="tx-date">·</span><span class="tx-desc">${escHtml(tx.description)}</span>` : ''}
       </div>
     </div>
     <div class="tx-right">
@@ -705,8 +705,11 @@ function saveTransaction() {
 /* =============================================
    HTML 이스케이프
 ============================================= */
+// 사용자 입력 문자열은 innerHTML에 넣기 전에 반드시 거친다 (S12, 2026-09-03).
+// 가구원이 넣은 계정명·메모가 상대 화면에서 HTML로 실행될 수 있어서다.
+// undefined/숫자가 와도 죽지 않게 String()으로 감싼다.
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 /* =============================================
@@ -728,16 +731,16 @@ function renderFixed() {
     const amtClass = item.amount === 0 ? 'fixed-amt-empty' : '';
     const subj = item.subject === '-'
       ? '<span class="badge badge-dash">-</span>'
-      : `<span class="badge badge-${item.subject}">${item.subject}</span>`;
+      : `<span class="badge badge-${escHtml(item.subject)}">${escHtml(item.subject)}</span>`;
     return `
       <div class="fixed-item">
         <div class="fixed-type-badge ${typeClass}">${typeLabel}</div>
         <div class="fixed-info">
           <div class="fixed-row1">
-            <span class="fixed-account">${item.account}</span>
+            <span class="fixed-account">${escHtml(item.account)}</span>
             ${subj}
           </div>
-          <div class="fixed-desc">${item.description}</div>
+          <div class="fixed-desc">${escHtml(item.description)}</div>
         </div>
         <div class="fixed-right">
           <div class="fixed-amt ${amtClass}" data-id="${item.id}">${amtDisplay}</div>
@@ -823,7 +826,7 @@ function renderIrregular() {
       <div class="irr-cat-card" data-cid="${cat.id}">
         <div class="irr-cat-header" data-cid="${cat.id}">
           <div class="irr-cat-left">
-            <span class="irr-cat-name">${cat.name}</span>
+            <span class="irr-cat-name">${escHtml(cat.name)}</span>
             <span class="irr-cat-budget">${fmt(cat.budget)}</span>
           </div>
           <div class="irr-cat-right">
@@ -939,12 +942,12 @@ function renderTransfer() {
         return `
         <div class="tr-acc-card">
           <div class="tr-acc-header">
-            <span class="tr-acc-name">${acc.name}</span>
+            <span class="tr-acc-name">${escHtml(acc.name)}</span>
             <span class="tr-acc-total">${accTotal.toLocaleString('ko-KR')}</span>
           </div>
           ${acc.items.map(it => `
             <div class="tr-item">
-              <span class="tr-item-name">${it.name}</span>
+              <span class="tr-item-name">${escHtml(it.name)}</span>
               <span class="tr-item-day">${it.day}일</span>
               <span class="tr-item-amt" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
               <button class="tr-item-del" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
@@ -975,12 +978,12 @@ function renderTransfer() {
         return `
         <div class="tr-acc-card">
           <div class="tr-acc-header">
-            <span class="tr-acc-name">${acc.name}</span>
+            <span class="tr-acc-name">${escHtml(acc.name)}</span>
             <span class="tr-acc-total">${accSum.toLocaleString('ko-KR')}</span>
           </div>
           ${acc.items.map(it => `
             <div class="tr-item">
-              <span class="tr-item-name">${it.name}</span>
+              <span class="tr-item-name">${escHtml(it.name)}</span>
               <span class="tr-item-day"></span>
               <span class="tr-item-amt" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
               <button class="tr-item-del" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
@@ -998,7 +1001,7 @@ function renderTransfer() {
          <div class="tr-acc-header"><span class="tr-acc-name">카드 청구액</span><span class="tr-acc-total">${cardTotal.toLocaleString('ko-KR')}</span></div>
          ${livingData.cards.map(c => `
            <div class="tr-item">
-             <span class="tr-item-name">${c.name}</span>
+             <span class="tr-item-name">${escHtml(c.name)}</span>
              <span class="tr-item-day"></span>
              <span class="tr-item-amt tr-card-amt" data-cid="${c.id}">${c.amount.toLocaleString('ko-KR')}</span>
              <button class="tr-card-del" data-cid="${c.id}">✕</button>
