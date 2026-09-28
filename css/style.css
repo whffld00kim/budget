@@ -1147,3 +1147,156 @@ input  { font-family: inherit; }
   border-bottom: none;
   padding-top: 10px;
 }
+
+/* ============ 태블릿 (2026-09-28) ============
+   갤럭시 탭을 가로로 두고 쓸 때. 폰 화면(위 규칙 전부)은 건드리지 않고 넓을 때만 덮어쓴다.
+   - 하단 네비게이션 → 왼쪽 세로 레일 (가로 화면은 높이가 아깝다)
+   - 페이지마다 두 단
+   - 입력창은 아래에서 올라오는 시트 대신 가운데 창
+   이 블록은 파일 맨 끝에 둔다 — 노치 대응(@supports) 규칙보다 뒤여야 이긴다 */
+@media (min-width: 900px) and (orientation: landscape) {
+  :root { --rail-w: 92px; }
+
+  body { background: var(--bg); }
+  #app {
+    max-width: none;
+    margin: 0;
+    padding-left: var(--rail-w);
+    box-shadow: none;
+  }
+
+  .page { padding-bottom: 28px; }
+  .page-header { padding: 14px 28px 12px; }
+  .page-title { font-size: 20px; }
+  .month-label { font-size: 16px; min-width: 100px; }
+  .month-btn { width: 40px; height: 40px; }
+  .page-body {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 20px 28px 0;
+  }
+
+  /* ── 왼쪽 레일 ── */
+  .bottom-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: none;
+    width: var(--rail-w);
+    max-width: none;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 0 0 env(safe-area-inset-left);
+    border-top: none;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 12px rgba(0,0,0,.05);
+  }
+  .nav-item {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 11px 0;
+    font-size: 12px;
+  }
+  .nav-item svg { width: 24px; height: 24px; }
+  .nav-add-btn { order: -1; margin-bottom: 10px; }
+  .add-circle { margin-top: 0; }
+
+  /* ── 홈: 왼쪽 요약 / 오른쪽 최근 내역 ── */
+  #page-home .page-body {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: 24px;
+    align-items: start;
+  }
+  #page-home .home-col-recent { grid-column: 2; grid-row: 1 / span 2; }
+  #page-home .backup-row { grid-column: 1; margin-top: 12px; }
+  .balance-amount { font-size: 36px; }
+  .summary-val { font-size: 20px; }
+
+  /* ── 내역: 필터 한 줄 + 목록 두 단 (위에서 아래로 읽고 옆 단으로) ── */
+  #page-history .page-body {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    column-gap: 20px;
+    align-items: center;
+  }
+  #page-history .chip-group { margin-bottom: 10px; }
+  #history-list {
+    grid-column: 1 / -1;
+    column-count: 2;
+    column-gap: 16px;
+    padding-top: 4px;
+  }
+  #history-list .tx-item { break-inside: avoid; }
+  #history-list .empty-state { column-span: all; }
+
+  /* ── 통계: 카드 2×2 ── */
+  #page-stats .page-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+    align-items: start;
+  }
+  .chart-box { height: 240px; }
+  .donut-box { width: 200px; height: 200px; }
+  .donut-legend li { font-size: 13px; }
+
+  /* ── 고정 항목: 두 단 ── */
+  #fixed-list { column-count: 2; column-gap: 16px; }
+  #fixed-list .fixed-item { break-inside: avoid; }
+  #fixed-list .empty-state { column-span: all; }
+  .fixed-hint { font-size: 13px; }
+  .fixed-apply-btn {
+    display: block;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ── 비정기: 카테고리 두 단 (펼치면 그 카드만 길어진다) ── */
+  #irr-cat-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    align-items: start;
+  }
+
+  /* ── 이체계산: 뺄 돈 | 생활비 ── */
+  #page-transfer .page-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    align-items: start;
+  }
+  #page-transfer #living-list { margin-top: 0 !important; }
+  .tr-item { font-size: 14px; padding: 7px 0; }
+  .tr-input { font-size: 13px; padding: 8px 10px; }
+
+  /* ── 목록 글자: 팔 길이에서 보는 화면이라 조금 키운다 ── */
+  .tx-account { font-size: 15px; }
+  .tx-date, .tx-desc { font-size: 13px; }
+  .tx-amount { font-size: 16px; }
+  .tx-del { width: 36px; height: 36px; }
+  .tx-del svg { width: 18px; height: 18px; }
+
+  /* ── 입력창: 가운데 창 ── */
+  .modal-overlay { align-items: center; padding-left: var(--rail-w); }
+  .modal-sheet {
+    max-width: 560px;
+    max-height: 90vh;
+    border-radius: 24px;
+    animation: fadeUp .2s ease;
+  }
+  .modal-handle { display: none; }
+  .modal-top { padding-top: 20px; }
+  .modal-body { padding-bottom: 24px; }
+
+  .toast { bottom: 28px; left: calc(50% + var(--rail-w) / 2); }
+}
+
+/* 태블릿을 세로로 세웠을 때 — 폰 배치 그대로, 폭만 넓힌다 */
+@media (min-width: 700px) and (orientation: portrait) {
+  #app, .bottom-nav, .modal-sheet { max-width: 720px; }
+}

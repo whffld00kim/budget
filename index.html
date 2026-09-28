@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20260412" />
+  <link rel="stylesheet" href="css/style.css?v=20260928" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -29,6 +29,8 @@
       </div>
     </div>
     <div class="page-body">
+      <!-- 태블릿 가로(2026-09-28)에서 왼쪽 단: 요약 / 오른쪽 단: 최근 내역 -->
+      <div class="home-col home-col-summary">
       <!-- 잔액 카드 -->
       <div class="balance-card">
         <div class="balance-row">
@@ -59,12 +61,15 @@
         <div class="card-head">주체별 현황</div>
         <div id="home-subjects"></div>
       </div>
+      </div>
+      <div class="home-col home-col-recent">
       <!-- 최근 내역 -->
       <div class="section-head">
         <span>최근 내역</span>
         <button class="text-btn" id="btn-see-all">전체 보기</button>
       </div>
       <div id="home-recent"></div>
+      </div>
       <!-- 백업 / 불러오기 -->
       <div class="backup-row">
         <button class="backup-btn" id="btn-backup">백업</button>
