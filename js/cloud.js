@@ -82,6 +82,11 @@
   function setError(msg)  { const el = $('auth-error');  if (el) el.textContent = msg || ''; }
   function showAuth()     { const el = $('auth-screen'); if (el) el.classList.remove('hidden'); }
   function hideAuth()     { const el = $('auth-screen'); if (el) el.classList.add('hidden'); }
+  // 로그인했던 기기 표시 — index.html의 인라인 스크립트가 읽어 로그인 버튼을 감춘다 (2026-09-29)
+  function markSignedIn(on) {
+    try { on ? localStorage.setItem('signed_in_before', '1') : localStorage.removeItem('signed_in_before'); } catch {}
+    if (!on) { const el = $('auth-screen'); if (el) el.classList.remove('resuming'); }
+  }
 
   function note(msg) {
     // app.js의 toast를 쓰되, 아직 안 떠 있으면 콘솔로만
@@ -227,7 +232,7 @@
     });
 
     auth.onAuthStateChanged(async user => {
-      if (!user) { uid = null; ready = false; showAuth(); setStatus(''); return; }
+      if (!user) { uid = null; ready = false; markSignedIn(false); showAuth(); setStatus(''); return; }
       uid = user.uid;
       try {
         const hidSnap = await firebase.database().ref('users/' + uid + '/householdId').get();
@@ -235,6 +240,7 @@
         if (!HID) throw new Error('no-household');
         ref = firebase.database().ref('home-ledger/' + HID);
         await start();
+        markSignedIn(true);
       } catch (e) {
         setStatus('');
         // 규칙에 걸리면 permission_denied. 가구 멤버가 아닌 계정으로 들어온 경우다.

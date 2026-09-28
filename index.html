@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20260928b" />
+  <link rel="stylesheet" href="css/style.css?v=20260929" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -285,13 +285,23 @@
     <div class="auth-status" id="auth-status"></div>
   </div>
 </div>
+<!-- 로그인했던 기기에서는 로그인 버튼 대신 "불러오는 중…"만 보인다 (2026-09-29 — 열 때마다 로그인 화면이 잠깐 비쳤다).
+     실제로 로그인이 풀렸으면 cloud.js가 표시를 지우고 버튼을 되살린다 -->
+<script>
+  try {
+    if (localStorage.getItem('signed_in_before')) {
+      document.getElementById('auth-screen').classList.add('resuming');
+      document.getElementById('auth-status').textContent = '불러오는 중…';
+    }
+  } catch (e) {}
+</script>
 
 <!-- Firebase (compat) — Book Tracker와 같은 방식 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="js/app.js?v=20260928"></script>
-<script src="js/cloud.js?v=20260820"></script>
+<script src="js/cloud.js?v=20260929"></script>
 <script>
   if ('serviceWorker' in navigator) {
     // 새 SW가 컨트롤을 가져가면 즉시 새로고침

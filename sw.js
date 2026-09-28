@@ -1,4 +1,4 @@
-const CACHE = 'gaegybu-v20260928b';
+const CACHE = 'gaegybu-v20260929a';   // 로그인했던 기기는 로그인 화면 대신 불러오는 중
 const ASSETS = ['./', './index.html', './css/style.css', './js/app.js', './js/cloud.js', './manifest.json'];
 
 // 설치: 핵심 파일 캐시

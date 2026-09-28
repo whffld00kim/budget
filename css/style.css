@@ -766,6 +766,9 @@ input  { font-family: inherit; }
   justify-content: center;
 }
 #auth-screen.hidden { display: none; }
+/* 로그인했던 기기: 확인이 끝날 때까지 버튼·안내를 감춘다 (2026-09-29) */
+#auth-screen.resuming .btn-google,
+#auth-screen.resuming .auth-sub { display: none; }
 .auth-wrap {
   display: flex;
   flex-direction: column;
