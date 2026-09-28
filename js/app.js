@@ -226,6 +226,17 @@ function updateMonthLabels() {
 }
 
 /* =============================================
+   태블릿 가로 (2026-09-28)
+   넓은 가로 화면에서는 최근 내역을 화면 높이에 맞는 만큼 보여 준다 (폰은 종전대로 6건)
+============================================= */
+const WIDE_MQ = window.matchMedia('(min-width: 900px) and (orientation: landscape)');
+function recentCount() {
+  if (!WIDE_MQ.matches) return 6;
+  // 헤더 66 + 위 여백 20 + 「최근 내역」 줄 34 + 아래 여백 28, 한 줄 84
+  return Math.max(6, Math.floor((window.innerHeight - 148) / 84));
+}
+
+/* =============================================
    홈 렌더링
 ============================================= */
 function renderHome() {
@@ -267,7 +278,7 @@ function renderHome() {
   subjEl.innerHTML = incomeRows + dashRow;
 
   // 최근 내역 (최신 6건)
-  const recent = [...txs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  const recent = [...txs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0, recentCount());
   const recentEl = document.getElementById('home-recent');
   if (recent.length === 0) {
     recentEl.innerHTML = `<div class="empty-state">
@@ -723,6 +734,9 @@ function renderFixed() {
     container.innerHTML = '<div class="empty-state"><p>📋</p><p>고정 항목이 없습니다</p></div>';
     return;
   }
+
+  // 태블릿 두 단: 왼쪽 단을 위에서 아래로 채우고 오른쪽 단으로 (CSS grid-auto-flow: column)
+  container.style.setProperty('--rows', Math.ceil(fixedList.length / 2));
 
   container.innerHTML = fixedList.map(item => {
     const typeLabel = item.type === 'income' ? '입금' : '출금';
@@ -1368,6 +1382,15 @@ window.__initApp = function () {
     if (dx < 0) goPage(PAGES[(idx + 1) % PAGES.length]);             // 오른쪽→왼쪽: 다음 탭 (순환)
     if (dx > 0) goPage(PAGES[(idx - 1 + PAGES.length) % PAGES.length]); // 왼쪽→오른쪽: 이전 탭 (순환)
   }, { passive: true });
+
+  // 화면을 돌리거나 창 크기가 바뀌면 홈의 최근 내역 건수를 다시 맞춘다
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (document.querySelector('.page.active')?.id === 'page-home') renderHome();
+    }, 200);
+  });
 
   // 초기 렌더
   renderHome();
