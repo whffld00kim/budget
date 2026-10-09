@@ -210,7 +210,6 @@ function goPage(name) {
   if (name === 'history') renderHistory();
   if (name === 'stats')   renderStats();
   if (name === 'fixed')     renderFixed();
-  if (name === 'irregular') renderIrregular();
   if (name === 'transfer') renderTransfer();
 }
 
@@ -258,10 +257,14 @@ function setStatsMode(mode) {
    넓은 가로 화면에서는 최근 내역을 화면 높이에 맞는 만큼 보여 준다 (폰은 종전대로 6건)
 ============================================= */
 const WIDE_MQ = window.matchMedia('(min-width: 900px) and (orientation: landscape)');
+// 폴드7 펼친 화면·태블릿 세로 (2026-10-09) — css/style.css 맨 끝 fold 블록과 같은 조건. 홈 왼쪽 단이 화면 높이를 채우니 오른쪽 최근 내역도 그만큼
+const FOLD_MQ = window.matchMedia('(min-width: 600px) and (max-width: 899px) and (min-height: 500px), (min-width: 600px) and (orientation: portrait)');
 function recentCount() {
-  if (!WIDE_MQ.matches) return 6;
-  // 헤더 66 + 위 여백 20 + 「최근 내역」 줄 34 + 아래 여백 28, 한 줄 84
-  return Math.max(6, Math.floor((window.innerHeight - 148) / 84));
+  // 태블릿 가로: 헤더 66 + 위 여백 20 + 「최근 내역」 줄 34 + 아래 여백 28, 한 줄 84
+  if (WIDE_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 148) / 84));
+  // 폴드: 헤더 58 + 위 여백 16 + 「최근 내역」 줄 34 + 아래 탭 68 + 아래 여백 24, 한 줄 84
+  if (FOLD_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 200) / 84));
+  return 6;
 }
 
 /* =============================================
@@ -834,154 +837,7 @@ function renderFixed() {
   });
 }
 
-/* =============================================
-   비정기 현황 렌더링
-============================================= */
-function renderIrregular() {
-  const yearEntries = irrData.entries.filter(e => e.year === irrYear);
-  const totalBudget = irrData.categories.reduce((s, c) => s + c.budget, 0);
-  const totalSpent  = yearEntries.reduce((s, e) => s + e.amount, 0);
-  const totalLeft   = totalBudget - totalSpent;
-
-  // 연도 표시
-  const yearEl = document.getElementById('irr-year');
-  if (yearEl) yearEl.textContent = irrYear + '년';
-
-  // 요약 카드
-  const summaryEl = document.getElementById('irr-summary');
-  if (summaryEl) {
-    const pct = totalBudget > 0 ? Math.min(100, Math.round(totalSpent / totalBudget * 100)) : 0;
-    const leftColor = totalLeft >= 0 ? 'var(--income)' : 'var(--expense)';
-    summaryEl.innerHTML = `
-      <div class="irr-sum-row">
-        <div class="irr-sum-item"><div class="irr-sum-label">연간예산</div><div class="irr-sum-val">${fmt(totalBudget)}</div></div>
-        <div class="irr-sum-item"><div class="irr-sum-label">사용</div><div class="irr-sum-val" style="color:var(--expense)">${fmt(totalSpent)}</div></div>
-        <div class="irr-sum-item"><div class="irr-sum-label">잔액</div><div class="irr-sum-val" style="color:${leftColor}">${fmt(totalLeft)}</div></div>
-      </div>
-      <div class="irr-progress-bar"><div class="irr-progress-fill" style="width:${pct}%"></div></div>
-      <div class="irr-pct-label">${pct}% 사용</div>`;
-  }
-
-  // 카테고리 목록
-  const listEl = document.getElementById('irr-cat-list');
-  if (!listEl) return;
-
-  listEl.innerHTML = irrData.categories.map(cat => {
-    const catEntries = yearEntries.filter(e => e.catId === cat.id);
-    const spent = catEntries.reduce((s, e) => s + e.amount, 0);
-    const left  = cat.budget - spent;
-    const pct   = cat.budget > 0 ? Math.min(100, Math.round(spent / cat.budget * 100)) : 0;
-    const leftColor = left >= 0 ? 'var(--income)' : 'var(--expense)';
-
-    const entriesHtml = catEntries.length === 0
-      ? '<div class="irr-no-entry">입력된 내역이 없습니다</div>'
-      : catEntries.sort((a,b) => a.month - b.month).map(e => `
-          <div class="irr-entry">
-            <span class="irr-entry-month">${e.month}월</span>
-            <span class="irr-entry-note">${e.note || ''}</span>
-            <span class="irr-entry-amt">${e.amount.toLocaleString('ko-KR')}</span>
-            <button class="irr-entry-del" data-eid="${e.id}">✕</button>
-          </div>`).join('');
-
-    return `
-      <div class="irr-cat-card" data-cid="${cat.id}">
-        <div class="irr-cat-header" data-cid="${cat.id}">
-          <div class="irr-cat-left">
-            <span class="irr-cat-name">${escHtml(cat.name)}</span>
-            <span class="irr-cat-budget">${fmt(cat.budget)}</span>
-          </div>
-          <div class="irr-cat-right">
-            <span class="irr-cat-left-amt" style="color:${leftColor}">${left >= 0 ? '' : '-'}${fmt(left)}</span>
-            <span class="irr-cat-arrow">▾</span>
-          </div>
-        </div>
-        <div class="irr-cat-bar"><div class="irr-cat-fill" style="width:${pct}%"></div></div>
-        <div class="irr-cat-body hidden" data-body="${cat.id}">
-          <div class="irr-entry-list">${entriesHtml}</div>
-          <div class="irr-add-row">
-            <select class="irr-month-sel" data-cid="${cat.id}">
-              ${MONTHS.map((m,i) => `<option value="${i+1}">${m}</option>`).join('')}
-            </select>
-            <input type="number" class="irr-amt-input" placeholder="금액" data-cid="${cat.id}" />
-            <input type="text" class="irr-note-input" placeholder="메모(선택)" data-cid="${cat.id}" />
-            <button class="irr-add-btn" data-cid="${cat.id}">추가</button>
-          </div>
-          <div class="irr-cat-footer">
-            <button class="irr-budget-btn" data-cid="${cat.id}">예산 수정</button>
-            <button class="irr-del-cat-btn" data-cid="${cat.id}">카테고리 삭제</button>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  // 아코디언 토글
-  listEl.querySelectorAll('.irr-cat-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const body = listEl.querySelector(`[data-body="${header.dataset.cid}"]`);
-      const arrow = header.querySelector('.irr-cat-arrow');
-      if (!body) return;
-      body.classList.toggle('hidden');
-      arrow.textContent = body.classList.contains('hidden') ? '▾' : '▴';
-    });
-  });
-
-  // 항목 삭제
-  listEl.querySelectorAll('.irr-entry-del').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      if (!confirm('이 항목을 삭제할까요?')) return;
-      irrData.entries = irrData.entries.filter(en => en.id !== btn.dataset.eid);
-      saveIrr(irrData);
-      renderIrregular();
-    });
-  });
-
-  // 지출 추가
-  listEl.querySelectorAll('.irr-add-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const cid = btn.dataset.cid;
-      const monthEl = listEl.querySelector(`.irr-month-sel[data-cid="${cid}"]`);
-      const amtEl   = listEl.querySelector(`.irr-amt-input[data-cid="${cid}"]`);
-      const noteEl  = listEl.querySelector(`.irr-note-input[data-cid="${cid}"]`);
-      const amt = Math.floor(+amtEl.value.replace(/,/g,''));
-      if (!amt || amt <= 0) { toast('금액을 입력하세요'); return; }
-      irrData.entries.push({ id: 'ie' + Date.now(), catId: cid, year: irrYear, month: +monthEl.value, amount: amt, note: noteEl.value.trim() });
-      saveIrr(irrData);
-      renderIrregular();
-    });
-  });
-
-  // 예산 수정
-  listEl.querySelectorAll('.irr-budget-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const cat = irrData.categories.find(c => c.id === btn.dataset.cid);
-      if (!cat) return;
-      const val = prompt(`"${cat.name}" 예산을 입력하세요:`, cat.budget);
-      if (val === null) return;
-      const newBudget = Math.floor(+val.replace(/,/g,''));
-      if (isNaN(newBudget) || newBudget < 0) { toast('올바른 금액을 입력하세요'); return; }
-      cat.budget = newBudget;
-      saveIrr(irrData);
-      renderIrregular();
-    });
-  });
-
-  // 카테고리 삭제
-  listEl.querySelectorAll('.irr-del-cat-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const cat = irrData.categories.find(c => c.id === btn.dataset.cid);
-      if (!cat) return;
-      if (!confirm(`"${cat.name}" 카테고리와 모든 내역을 삭제할까요?`)) return;
-      irrData.categories = irrData.categories.filter(c => c.id !== btn.dataset.cid);
-      irrData.entries    = irrData.entries.filter(e => e.catId !== btn.dataset.cid);
-      saveIrr(irrData);
-      renderIrregular();
-    });
-  });
-}
+/* 비정기 현황 탭은 2026-10-09 삭제 — 부부가계부 앱에 같은 기능이 있다 (사용자 결정). 데이터(loadIrr·백업 항목)는 그대로 둔다 */
 
 /* =============================================
    이체계산 렌더링
@@ -1384,19 +1240,6 @@ window.__initApp = function () {
   document.getElementById('btn-apply-fixed').addEventListener('click', applyFixedToMonth);
 
   // 비정기 탭 이벤트
-  document.getElementById('irr-prev').addEventListener('click', () => { irrYear--; renderIrregular(); });
-  document.getElementById('irr-next').addEventListener('click', () => { irrYear++; renderIrregular(); });
-  document.getElementById('btn-add-irr-cat').addEventListener('click', () => {
-    const name = prompt('새 카테고리 이름:');
-    if (!name || !name.trim()) return;
-    const budgetStr = prompt(`"${name.trim()}" 연간 예산 금액:`);
-    if (budgetStr === null) return;
-    const budget = Math.floor(+budgetStr.replace(/,/g,''));
-    if (isNaN(budget) || budget < 0) { toast('올바른 금액을 입력하세요'); return; }
-    irrData.categories.push({ id: 'ic' + Date.now(), name: name.trim(), budget });
-    saveIrr(irrData);
-    renderIrregular();
-  });
 
   // 모달 닫기
   document.getElementById('modal-close').addEventListener('click',    closeModal);
@@ -1411,13 +1254,12 @@ window.__initApp = function () {
       if (active?.id === 'page-history') renderHistory();
       if (active?.id === 'page-stats')   renderStats();
       if (active?.id === 'page-fixed')     renderFixed();
-      if (active?.id === 'page-irregular') renderIrregular();
       if (active?.id === 'page-transfer') renderTransfer();
     }
   });
 
   // 스와이프로 탭 이동 (좌→우: 이전 탭, 우→좌: 다음 탭)
-  const PAGES = ['home', 'history', 'stats', 'fixed', 'irregular', 'transfer'];
+  const PAGES = ['home', 'history', 'stats', 'fixed', 'transfer'];
   let touchStartX = 0;
   let touchStartY = 0;
   document.getElementById('app').addEventListener('touchstart', e => {

@@ -28,6 +28,8 @@ PC와 모바일에서 모두 사용 가능한 개인 가계부 앱입니다.
 | 폴드7 펼친 화면 · 탭 S7+ 세로 | `(min-width:600px) and (max-width:899px) and (min-height:500px)`, `(min-width:600px) and (orientation:portrait)` | 하단 탭 그대로, **글자 크기 폰 그대로**, 페이지마다 두 단 (통계는 막대 전체폭 + 도넛 둘 나란히). 그전엔 폰 배치에 폭만 720이었다 |
 | 탭 S7+ 가로 | `(min-width:900px) and (orientation:landscape)` | 왼쪽 레일, 두 단, 글자 조금 키움, 화면 높이 채움 |
 
+「비정기 현황」 탭은 **2026-10-09 삭제** — 부부가계부 앱에 같은 기능이 있어 사용자 결정. 저장 구조(`gaegybu_irregular_v1`, 클라우드 `irregular`, 백업 파일 항목)는 그대로 두어 옛 백업도 그대로 읽힌다. 되살리려면 커밋 `ed983b2`의 `index.html` 섹션·탭 버튼과 `app.js` `renderIrregular`.
+
 ## 계정 분류
 
 - **입금**: 개인연금, 보너스, 월급 + 직접 추가 가능

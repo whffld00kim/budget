@@ -1321,21 +1321,32 @@ input  { font-family: inherit; }
    규칙(LifeOS apps-internals/references/screen-layout.md): 글자·아이콘 크기는 폰 그대로, 자리만 더 쓴다 —
    하단 탭은 그대로, 페이지마다 두 단. 폰 가로(높이 500 미만)는 제외. 태블릿 가로 블록(아래)과는 조건이 안 겹친다 */
 @media (min-width: 600px) and (max-width: 899px) and (min-height: 500px), (min-width: 600px) and (orientation: portrait) {
+  /* 헤더 58 + 아래 탭 68 + 페이지 아래 여백 24 를 뺀 높이 — 홈·고정이 이 높이를 채운다 (2026-10-09 사용자: 아래 여백이 너무 크다) */
+  :root { --fold-body-h: calc(100dvh - 150px); }
+
   body { background: var(--bg); }
   #app { max-width: none; box-shadow: none; }
   .bottom-nav { max-width: none; }
   .page-header { padding: 14px 22px 12px; }
   .page-body { padding: 16px 20px 0; }
 
-  /* ── 홈: 요약 | 최근 내역 ── */
+  /* ── 홈: 요약 | 최근 내역. 왼쪽 단은 화면 높이를 채우고(주체별 카드가 남는 높이를 가져감) 백업 줄은 맨 아래 ── */
   #page-home .page-body {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: minmax(0, 1fr) auto;
     column-gap: 20px;
-    align-items: start;
+    align-items: stretch;
+    min-height: var(--fold-body-h);
   }
+  #page-home .home-col { display: flex; flex-direction: column; min-height: 0; }
   #page-home .home-col-recent { grid-column: 2; grid-row: 1 / span 2; }
-  #page-home .backup-row { grid-column: 1; }
+  .balance-card { margin-bottom: 14px; }
+  .summary-grid { margin-bottom: 14px; }
+  #page-home .home-col-summary .card { flex: 1; display: flex; flex-direction: column; margin-bottom: 0; }
+  #home-subjects { flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+  #page-home .backup-row { grid-column: 1; margin-top: 14px; padding-bottom: 0; }
+  #home-recent { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
   /* ── 내역: 목록 두 단 ── */
   #history-list { column-count: 2; column-gap: 16px; }
@@ -1354,17 +1365,15 @@ input  { font-family: inherit; }
   .donut-wrap { gap: 12px; }
   .donut-box { width: 140px; height: 140px; }
 
-  /* ── 고정 항목·비정기·이체: 두 단 ── */
+  /* ── 고정 항목: 목록 두 단, 「이번달 입력하기」는 목록 아래 남는 공간의 한가운데 (2026-10-09 사용자 요청) ── */
+  #page-fixed .page-body { display: flex; flex-direction: column; min-height: var(--fold-body-h); }
+  #page-fixed .fixed-header-row, #fixed-list { flex: 0 0 auto; }
   #fixed-list { column-count: 2; column-gap: 16px; }
   #fixed-list .fixed-item { break-inside: avoid; }
   #fixed-list .empty-state { column-span: all; }
-  .fixed-apply-btn { display: block; max-width: 420px; margin-left: auto; margin-right: auto; }
-  #irr-cat-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
-    align-items: start;
-  }
+  .fixed-apply-btn { display: block; width: 100%; max-width: 420px; margin: auto; }
+
+  /* ── 이체: 두 단 ── */
   #page-transfer .page-body {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
