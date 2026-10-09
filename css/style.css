@@ -1361,6 +1361,9 @@ input  { font-family: inherit; }
     align-items: start;
   }
   #page-stats .card:nth-child(1), #page-stats .card:nth-child(4) { grid-column: 1 / -1; }
+  /* 지출·수입 도넛 카드는 같은 높이로 — 항목이 적은 수입 카드가 짧게 끝나던 것 (2026-10-09 사용자 요청) */
+  #page-stats .card:nth-child(2), #page-stats .card:nth-child(3) { align-self: stretch; display: flex; flex-direction: column; }
+  #page-stats .card:nth-child(2) .donut-wrap, #page-stats .card:nth-child(3) .donut-wrap { flex: 1; }
   .chart-box { height: 240px; }
   .donut-wrap { gap: 12px; }
   .donut-box { width: 140px; height: 140px; }
