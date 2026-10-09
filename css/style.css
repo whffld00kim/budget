@@ -1248,6 +1248,8 @@ input  { font-family: inherit; }
   #page-history .chip-group { margin-bottom: 10px; }
   #history-list {
     grid-column: 1 / -1;
+    /* 목록은 행 위에 붙인다 — align-items:center 때문에 양이 적으면 세로 가운데로 내려앉았다 (2026-10-09 사용자 지적) */
+    align-self: start;
     column-count: 2;
     column-gap: 16px;
     padding-top: 4px;
