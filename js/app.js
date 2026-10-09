@@ -158,6 +158,10 @@ let chartBar        = null;
 let chartExpDonut   = null;
 let chartIncDonut   = null;
 
+// 통계 기간 단위 (2026-10-09 사용자 요청: 월 단위만 있던 통계에 연 단위 추가)
+// 'month' = 보던 달(종전 그대로) · 'year' = 보던 해 전체 — 막대는 1~12월, 도넛·주체별은 연간 합계
+let statsMode = 'month';
+
 /* =============================================
    유틸
 ============================================= */
@@ -172,12 +176,17 @@ function monthTxs(y, m) {
   });
 }
 
+function yearTxs(y) {
+  return txList.filter(t => Number(t.date.slice(0, 4)) === y);
+}
+
 function fmtDate(d) {
   const [,m,dd] = d.split('-');
   return `${+m}/${+dd}`;
 }
 
 function monthLabel(y, m) { return `${y}년 ${MONTHS[m-1]}`; }
+function yearLabel(y)     { return `${y}년`; }
 
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -219,10 +228,29 @@ function changeMonth(delta) {
 
 function updateMonthLabels() {
   const label = monthLabel(viewYear, viewMonth);
-  ['home-month','hist-month','stats-month'].forEach(id => {
+  ['home-month','hist-month'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = label;
   });
+  // 통계는 연 단위일 때 해만 보여 준다 (보던 달은 그대로 두어 월로 돌아오면 그 달)
+  const st = document.getElementById('stats-month');
+  if (st) st.textContent = statsMode === 'year' ? yearLabel(viewYear) : label;
+}
+
+// 통계 ‹ › — 연 단위면 해 단위로, 아니면 다른 탭과 같은 달 이동
+function changeStatsPeriod(delta) {
+  if (statsMode !== 'year') { changeMonth(delta); return; }
+  viewYear += delta;
+  updateMonthLabels();
+  renderStats();
+}
+
+function setStatsMode(mode) {
+  if (mode !== 'month' && mode !== 'year') return;
+  statsMode = mode;
+  document.querySelectorAll('#stats-mode .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  updateMonthLabels();
+  renderStats();
 }
 
 /* =============================================
@@ -368,31 +396,49 @@ function bindTxEvents(container) {
    통계 렌더링
 ============================================= */
 function renderStats() {
-  const txs = monthTxs(viewYear, viewMonth);
+  const yearMode = statsMode === 'year';
+  const txs = yearMode ? yearTxs(viewYear) : monthTxs(viewYear, viewMonth);
 
-  // ── 월별 막대 차트 (최근 6개월) ──
-  const months6 = [];
-  for (let i = 5; i >= 0; i--) {
-    let m = viewMonth - i, y = viewYear;
-    while (m < 1)  { m += 12; y--; }
-    while (m > 12) { m -= 12; y++; }
-    const mt = monthTxs(y, m);
-    months6.push({
-      label: MONTHS[m-1],
-      inc:   mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
-      exp:   mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
-    });
+  // ── 막대 차트: 월 단위 = 보던 달까지 6개월, 연 단위 = 그 해 1~12월 ──
+  const bars = [];
+  if (yearMode) {
+    for (let m = 1; m <= 12; m++) {
+      const mt = monthTxs(viewYear, m);
+      bars.push({
+        label: MONTHS[m-1],
+        inc:   mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+        exp:   mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
+      });
+    }
+  } else {
+    for (let i = 5; i >= 0; i--) {
+      let m = viewMonth - i, y = viewYear;
+      while (m < 1)  { m += 12; y--; }
+      while (m > 12) { m -= 12; y++; }
+      const mt = monthTxs(y, m);
+      bars.push({
+        label: MONTHS[m-1],
+        inc:   mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+        exp:   mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
+      });
+    }
   }
+
+  // 카드 제목: 월 단위는 종전 그대로, 연 단위는 "2026년 지출 내역"
+  const expHead = document.getElementById('stats-exp-head');
+  const incHead = document.getElementById('stats-inc-head');
+  if (expHead) expHead.textContent = yearMode ? `${viewYear}년 지출 내역` : '이번달 지출 내역';
+  if (incHead) incHead.textContent = yearMode ? `${viewYear}년 수입 내역` : '이번달 수입 내역';
 
   const barCanvas = document.getElementById('chart-bar');
   if (chartBar) chartBar.destroy();
   chartBar = new Chart(barCanvas, {
     type: 'bar',
     data: {
-      labels: months6.map(m=>m.label),
+      labels: bars.map(m=>m.label),
       datasets: [
-        { label:'수입', data:months6.map(m=>m.inc),  backgroundColor:'rgba(16,185,129,.75)', borderRadius:5 },
-        { label:'지출', data:months6.map(m=>m.exp),  backgroundColor:'rgba(239,68,68,.75)',  borderRadius:5 },
+        { label:'수입', data:bars.map(m=>m.inc),  backgroundColor:'rgba(16,185,129,.75)', borderRadius:5 },
+        { label:'지출', data:bars.map(m=>m.exp),  backgroundColor:'rgba(239,68,68,.75)',  borderRadius:5 },
       ],
     },
     options: {
@@ -402,7 +448,8 @@ function renderStats() {
         tooltip:{ callbacks:{ label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)}` } },
       },
       scales:{
-        x:{ grid:{display:false}, ticks:{font:{size:11}} },
+        // 연 단위는 폰에서 12개 라벨이 비스듬히 기울어 — 글자를 조금 줄이고 눕히지 않는다
+        x:{ grid:{display:false}, ticks:{font:{size: yearMode ? 10 : 11}, maxRotation:0, autoSkip:false} },
         y:{ grid:{color:'rgba(0,0,0,.04)'}, ticks:{font:{size:10}, callback:v=>v>=1000000?(v/1000000).toFixed(0)+'M':v>=1000?(v/1000).toFixed(0)+'K':v } },
       },
     },
@@ -1262,9 +1309,13 @@ window.__initApp = function () {
   // 월 이동 – 내역
   document.getElementById('hist-prev').addEventListener('click', () => changeMonth(-1));
   document.getElementById('hist-next').addEventListener('click', () => changeMonth(1));
-  // 월 이동 – 통계
-  document.getElementById('stats-prev').addEventListener('click', () => changeMonth(-1));
-  document.getElementById('stats-next').addEventListener('click', () => changeMonth(1));
+  // 기간 이동 – 통계 (연 단위면 해 단위로)
+  document.getElementById('stats-prev').addEventListener('click', () => changeStatsPeriod(-1));
+  document.getElementById('stats-next').addEventListener('click', () => changeStatsPeriod(1));
+  // 통계 월/연 단위 토글 (2026-10-09)
+  document.querySelectorAll('#stats-mode .seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => setStatsMode(btn.dataset.mode));
+  });
 
   // 내역 필터 – 구분 탭
   document.querySelectorAll('#hist-type-tabs .ftab').forEach(btn => {

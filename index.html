@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20260929" />
+  <link rel="stylesheet" href="css/style.css?v=20261009" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -114,10 +114,17 @@
   <section id="page-stats" class="page">
     <div class="page-header">
       <h1 class="page-title">통계</h1>
-      <div class="month-nav">
-        <button class="month-btn" id="stats-prev">&#8249;</button>
-        <span class="month-label" id="stats-month"></span>
-        <button class="month-btn" id="stats-next">&#8250;</button>
+      <div class="header-right">
+        <!-- 월/연 단위 (2026-10-09): 연을 고르면 ‹ ›가 해 단위로 움직이고 그 해 1~12월·연간 합계를 보여 준다 -->
+        <div class="mode-seg" id="stats-mode">
+          <button class="seg-btn active" data-mode="month">월</button>
+          <button class="seg-btn" data-mode="year">연</button>
+        </div>
+        <div class="month-nav">
+          <button class="month-btn" id="stats-prev">&#8249;</button>
+          <span class="month-label" id="stats-month"></span>
+          <button class="month-btn" id="stats-next">&#8250;</button>
+        </div>
       </div>
     </div>
     <div class="page-body">
@@ -128,7 +135,7 @@
       </div>
       <!-- 지출 도넛 -->
       <div class="card">
-        <div class="card-head">이번달 지출 내역</div>
+        <div class="card-head" id="stats-exp-head">이번달 지출 내역</div>
         <div class="donut-wrap">
           <div class="donut-box"><canvas id="chart-expense-donut"></canvas></div>
           <ul class="donut-legend" id="expense-legend"></ul>
@@ -137,7 +144,7 @@
       </div>
       <!-- 수입 도넛 -->
       <div class="card">
-        <div class="card-head">이번달 수입 내역</div>
+        <div class="card-head" id="stats-inc-head">이번달 수입 내역</div>
         <div class="donut-wrap">
           <div class="donut-box"><canvas id="chart-income-donut"></canvas></div>
           <ul class="donut-legend" id="income-legend"></ul>
@@ -300,7 +307,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="js/app.js?v=20260928"></script>
+<script src="js/app.js?v=20261009"></script>
 <script src="js/cloud.js?v=20260929"></script>
 <script>
   if ('serviceWorker' in navigator) {

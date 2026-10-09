@@ -112,6 +112,22 @@ input  { font-family: inherit; }
   text-align: center;
 }
 
+/* 통계 헤더 오른쪽: 월/연 토글 + 기간 이동 (2026-10-09) */
+.header-right { display: flex; align-items: center; gap: 10px; }
+.mode-seg {
+  display: flex;
+  border: 1px solid rgba(255,255,255,.55);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.85);
+}
+.seg-btn.active { background: #fff; color: var(--primary); }
+
 /* ============ 페이지 바디 ============ */
 .page-body { padding: 14px 14px 0; }
 
@@ -1299,9 +1315,66 @@ input  { font-family: inherit; }
   .toast { bottom: 28px; left: calc(50% + var(--rail-w) / 2); }
 }
 
-/* 태블릿을 세로로 세웠을 때 — 폰 배치 그대로, 폭만 넓힌다 */
-@media (min-width: 700px) and (orientation: portrait) {
-  #app, .bottom-nav, .modal-sheet { max-width: 720px; }
+/* ============ 폴드7 펼친 화면 · 태블릿 세로 (2026-10-09) ============
+   폭 600px 이상인데 태블릿 가로(900+ 가로)는 아닌 화면 — 폴드7 펼침(약 750×830), 탭 S7+ 세로(804×1323).
+   그전엔 "폰 배치 그대로 폭만 720"이라 접은 화면과 똑같이 보였다(사용자 지적).
+   규칙(LifeOS apps-internals/references/screen-layout.md): 글자·아이콘 크기는 폰 그대로, 자리만 더 쓴다 —
+   하단 탭은 그대로, 페이지마다 두 단. 폰 가로(높이 500 미만)는 제외. 태블릿 가로 블록(아래)과는 조건이 안 겹친다 */
+@media (min-width: 600px) and (max-width: 899px) and (min-height: 500px), (min-width: 600px) and (orientation: portrait) {
+  body { background: var(--bg); }
+  #app { max-width: none; box-shadow: none; }
+  .bottom-nav { max-width: none; }
+  .page-header { padding: 14px 22px 12px; }
+  .page-body { padding: 16px 20px 0; }
+
+  /* ── 홈: 요약 | 최근 내역 ── */
+  #page-home .page-body {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: 20px;
+    align-items: start;
+  }
+  #page-home .home-col-recent { grid-column: 2; grid-row: 1 / span 2; }
+  #page-home .backup-row { grid-column: 1; }
+
+  /* ── 내역: 목록 두 단 ── */
+  #history-list { column-count: 2; column-gap: 16px; }
+  #history-list .tx-item { break-inside: avoid; }
+  #history-list .empty-state { column-span: all; }
+
+  /* ── 통계: 막대는 한 줄 전체, 지출·수입 도넛은 나란히, 주체별은 전체 ── */
+  #page-stats .page-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    align-items: start;
+  }
+  #page-stats .card:nth-child(1), #page-stats .card:nth-child(4) { grid-column: 1 / -1; }
+  .chart-box { height: 240px; }
+  .donut-wrap { gap: 12px; }
+  .donut-box { width: 140px; height: 140px; }
+
+  /* ── 고정 항목·비정기·이체: 두 단 ── */
+  #fixed-list { column-count: 2; column-gap: 16px; }
+  #fixed-list .fixed-item { break-inside: avoid; }
+  #fixed-list .empty-state { column-span: all; }
+  .fixed-apply-btn { display: block; max-width: 420px; margin-left: auto; margin-right: auto; }
+  #irr-cat-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px;
+    align-items: start;
+  }
+  #page-transfer .page-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+    align-items: start;
+  }
+  #page-transfer #living-list { margin-top: 0 !important; }
+
+  /* ── 입력창: 아래 시트 그대로, 폭만 제한 ── */
+  .modal-sheet { max-width: 600px; }
 }
 
 /* ============ 태블릿 가로 — 화면 높이 채우기 (2026-09-28) ============
