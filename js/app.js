@@ -188,12 +188,13 @@ function fmtDate(d) {
 function monthLabel(y, m) { return `${y}년 ${MONTHS[m-1]}`; }
 function yearLabel(y)     { return `${y}년`; }
 
-function toast(msg) {
+// ms: 보여 줄 시간. 기본 2초. cloud.js 의 동기화 안내처럼 읽어야 하는 말은 더 길게 준다 (2026-10-12)
+function toast(msg, ms) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.remove('hidden');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.add('hidden'), 2000);
+  toast._t = setTimeout(() => el.classList.add('hidden'), ms > 0 ? ms : 2000);
 }
 
 /* =============================================
@@ -1130,6 +1131,16 @@ function restoreData(file) {
   reader.readAsText(file);
 }
 
+// 지금 보고 있는 페이지를 다시 그린다 (다른 기기의 변경을 반영했거나 불러온 뒤)
+function renderActivePage() {
+  const active = document.querySelector('.page.active');
+  if (active?.id === 'page-home')     renderHome();
+  if (active?.id === 'page-history')  renderHistory();
+  if (active?.id === 'page-stats')    renderStats();
+  if (active?.id === 'page-fixed')    renderFixed();
+  if (active?.id === 'page-transfer') renderTransfer();
+}
+
 /* =============================================
    이벤트 바인딩 (초기화)
 ============================================= */
@@ -1147,8 +1158,9 @@ window.__initApp = function () {
   livingData = loadLiving();
   updateMonthLabels();
 
-  // 재호출이면 다시 그리기만 한다 (리스너를 두 번 붙이면 클릭이 두 번 먹는다)
-  if (__eventsBound) { renderHome(); return; }
+  // 재호출이면 다시 그리기만 한다 (리스너를 두 번 붙이면 클릭이 두 번 먹는다).
+  // 홈만 그리면 통계·고정·이체 탭을 보던 중에는 옛 화면이 남았다 → 보던 페이지를 그린다 (2026-10-12)
+  if (__eventsBound) { renderActivePage(); return; }
   __eventsBound = true;
 
   // 페이지 네비게이션

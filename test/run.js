@@ -113,7 +113,8 @@ async function newDevice(browser, base, server) {
       const r = page.dialogReply;
       if (r.accept) await d.accept(r.text || undefined); else await d.dismiss();
     });
-    page.on('pageerror', e => dev.errors.push(String(e.message).split('\n')[0]));
+    // 시험에서는 서비스워커를 막아 register() 가 빈 값을 돌려준다 — 그 오류는 앱 문제가 아니라 거른다
+    page.on('pageerror', e => { const m = String(e.message).split('\n')[0]; if (!m.includes("reading 'update'")) dev.errors.push(m); });
     if (o.fixedTime) await page.clock.setFixedTime(o.fixedTime);
     if (dev.online === false) await page.addInitScript(() => { window.__onLine = false; });
     await page.goto(base + 'index.html');
