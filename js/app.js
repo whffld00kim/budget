@@ -1112,9 +1112,12 @@ function backupData() {
   a.href     = url;
   a.download = `가계부_백업_${date}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);   // 바로 지우면 일부 브라우저가 내려받기를 시작하지 못한다
   toast('백업 파일이 저장되었습니다.');
 }
+
+// 배열이어야 하는 자리를 배열로 (백업 파일이 손으로 고쳐졌거나 옛 형식이어도 앱이 죽지 않게)
+const toArr = v => (v == null) ? [] : (Array.isArray(v) ? v : Object.values(v));
 
 function restoreData(file) {
   if (!file) return;
@@ -1122,16 +1125,27 @@ function restoreData(file) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
+      if (!data || !Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
+      // 거래마다 날짜·구분·금액 형식을 본다 (2026-10-12). 날짜 없는 거래 하나가 들어오면 월 계산이 멈춰
+      // 앱 전체가 안 열리므로, 하나라도 깨져 있으면 파일째 거부한다
+      data.transactions.forEach((t, i) => {
+        if (!t || typeof t.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(t.date) ||
+            (t.type !== 'income' && t.type !== 'expense') || !Number.isFinite(Number(t.amount))) {
+          throw new Error(`${i + 1}번째 거래의 날짜·구분·금액이 올바르지 않습니다.`);
+        }
+      });
       if (!confirm(`${data.transactions.length}개의 거래 내역을 불러옵니다.\n현재 데이터는 덮어씌워집니다. 계속할까요?`)) return;
-      txList = data.transactions;
+      txList = data.transactions.map(t => ({ ...t, id: String(t.id || uid()), amount: Math.floor(Number(t.amount)) }));
       saveTx(txList);
-      saveCustom(data.custom || { income: [], expense: [] });
-      if (data.fixed)     saveFixed(data.fixed);
+      // 파일에 없는 항목은 지금 것을 그대로 둔다 (옛 백업엔 고정·이체 항목이 없다). 있으면 모양을 맞춰 넣는다
+      if (data.custom)    saveCustom({ ...data.custom, income: toArr(data.custom.income), expense: toArr(data.custom.expense) });
+      if (data.fixed)     saveFixed(toArr(data.fixed));
       if (data.irregular) saveIrr(data.irregular);
-      if (data.deduct)    saveDeduct(data.deduct);
-      if (data.living)    saveLiving(data.living);
-      renderHome();
+      if (data.deduct)    saveDeduct({ ...data.deduct, accounts: toArr(data.deduct.accounts).map(a => ({ ...a, items: toArr(a && a.items) })) });
+      if (data.living)    saveLiving({ ...data.living, accounts: toArr(data.living.accounts).map(a => ({ ...a, items: toArr(a && a.items) })), cards: toArr(data.living.cards) });
+      // 메모리의 고정·이체 목록도 파일 것으로 바꾼다 (2026-10-12). 그전엔 저장소만 바뀌고 메모리는 옛것이라,
+      // 고정 탭에서 금액 하나만 고쳐도 옛 목록이 되살아나 불러오기가 무효가 됐다
+      window.__initApp();
       toast('불러오기 완료!');
     } catch (err) {
       alert('파일을 읽는 중 오류가 발생했습니다:\n' + err.message);
