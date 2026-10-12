@@ -357,7 +357,7 @@ function renderHistory() {
 function txItem(tx) {
   const isInc = tx.type === 'income';
   const sign  = isInc ? '+' : '-';
-  return `<div class="tx-item" data-id="${tx.id}">
+  return `<div class="tx-item" data-id="${escHtml(tx.id)}">
     <div class="tx-dot ${isInc?'inc':'exp'}">${isInc?'↑':'↓'}</div>
     <div class="tx-info">
       <div class="tx-top">
@@ -371,7 +371,7 @@ function txItem(tx) {
     </div>
     <div class="tx-right">
       <span class="tx-amount ${isInc?'inc':'exp'}">${sign}${Number(tx.amount).toLocaleString('ko-KR')}</span>
-      <button class="tx-del" data-del="${tx.id}" title="삭제">
+      <button class="tx-del" data-del="${escHtml(tx.id)}" title="삭제">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd"/>
         </svg>
@@ -537,7 +537,7 @@ function buildDonut(kind, txs, canvasId, legendId, emptyId) {
   legend.innerHTML = entries.map(([acc,val],i) => `
     <li>
       <span class="legend-dot" style="background:${colors[i]}"></span>
-      <span class="legend-name">${acc}</span>
+      <span class="legend-name">${escHtml(acc)}</span>
       <span class="legend-pct">${total?Math.round(val/total*100):0}%</span>
     </li>`).join('');
 }
@@ -594,7 +594,7 @@ function renderModalForm(tx) {
     <!-- 날짜 -->
     <div class="form-group">
       <label class="form-label">날짜</label>
-      <input type="date" id="f-date" class="form-input" value="${dateVal}" />
+      <input type="date" id="f-date" class="form-input" value="${escHtml(dateVal)}" />
     </div>
 
     <!-- 계정 -->
@@ -642,7 +642,7 @@ function renderAccountChips() {
   if (!container) return;
 
   container.innerHTML = accounts.map(acc =>
-    `<button class="chip ${formAccount===acc?'selected':''}" data-acc="${acc}">${acc}</button>`
+    `<button class="chip ${formAccount===acc?'selected':''}" data-acc="${escHtml(acc)}">${escHtml(acc)}</button>`
   ).join('') + `<button class="chip add-chip" id="btn-add-acc">+ 추가</button>`;
 
   container.querySelectorAll('.chip[data-acc]').forEach(chip => {
@@ -778,6 +778,8 @@ function saveTransaction() {
 ============================================= */
 // 사용자 입력 문자열은 innerHTML에 넣기 전에 반드시 거친다 (S12, 2026-09-03).
 // 가구원이 넣은 계정명·메모가 상대 화면에서 HTML로 실행될 수 있어서다.
+// 2026-10-12: 계정 칩·도넛 범례의 계정명, 추가 창의 날짜 값, data-id 의 id 가 빠져 있던 것을 채웠다
+// (직접 만든 계정 이름이나 불러온 백업 파일의 값이 그대로 HTML 로 들어갔다).
 // undefined/숫자가 와도 죽지 않게 String()으로 감싼다.
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -817,8 +819,8 @@ function renderFixed() {
           <div class="fixed-desc">${escHtml(item.description)}</div>
         </div>
         <div class="fixed-right">
-          <div class="fixed-amt ${amtClass}" data-id="${item.id}">${amtDisplay}</div>
-          <button class="fixed-del-btn" data-id="${item.id}">✕</button>
+          <div class="fixed-amt ${amtClass}" data-id="${escHtml(item.id)}">${amtDisplay}</div>
+          <button class="fixed-del-btn" data-id="${escHtml(item.id)}">✕</button>
         </div>
       </div>`;
   }).join('');
@@ -875,15 +877,15 @@ function renderTransfer() {
           ${acc.items.map(it => `
             <div class="tr-item">
               <span class="tr-item-name">${escHtml(it.name)}</span>
-              <span class="tr-item-day">${it.day}일</span>
-              <span class="tr-item-amt" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
-              <button class="tr-item-del" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+              <span class="tr-item-day">${escHtml(it.day)}일</span>
+              <span class="tr-item-amt" data-sec="deduct" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="deduct" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">✕</button>
             </div>`).join('')}
           <div class="tr-add-row">
-            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="deduct" />
-            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="deduct" />
-            <input class="tr-input tr-input-xs" type="number" placeholder="일" data-add-day data-aid="${acc.id}" data-sec="deduct" />
-            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="deduct">추가</button>
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <input class="tr-input tr-input-xs" type="number" placeholder="일" data-add-day data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <button class="tr-add-btn" data-aid="${escHtml(acc.id)}" data-sec="deduct">추가</button>
           </div>
         </div>`;
       }).join('') +
@@ -912,14 +914,14 @@ function renderTransfer() {
             <div class="tr-item">
               <span class="tr-item-name">${escHtml(it.name)}</span>
               <span class="tr-item-day"></span>
-              <span class="tr-item-amt" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
-              <button class="tr-item-del" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+              <span class="tr-item-amt" data-sec="living" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="living" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">✕</button>
             </div>`).join('')}
           <div class="tr-add-row">
-            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="living" />
-            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="living" />
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${escHtml(acc.id)}" data-sec="living" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${escHtml(acc.id)}" data-sec="living" />
             <div></div>
-            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="living">추가</button>
+            <button class="tr-add-btn" data-aid="${escHtml(acc.id)}" data-sec="living">추가</button>
           </div>
         </div>`;
       }).join('') +
@@ -930,8 +932,8 @@ function renderTransfer() {
            <div class="tr-item">
              <span class="tr-item-name">${escHtml(c.name)}</span>
              <span class="tr-item-day"></span>
-             <span class="tr-item-amt tr-card-amt" data-cid="${c.id}">${c.amount.toLocaleString('ko-KR')}</span>
-             <button class="tr-card-del" data-cid="${c.id}">✕</button>
+             <span class="tr-item-amt tr-card-amt" data-cid="${escHtml(c.id)}">${c.amount.toLocaleString('ko-KR')}</span>
+             <button class="tr-card-del" data-cid="${escHtml(c.id)}">✕</button>
            </div>`).join('')}
          <div class="tr-add-row">
            <input class="tr-input" placeholder="카드명" id="new-card-name" />
