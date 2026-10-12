@@ -1,0 +1,11 @@
+{
+  "name": "budget",
+  "private": true,
+  "description": "우리집 가계부 — 시험 실행용 (앱 자체는 정적 파일이라 빌드가 없다)",
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
