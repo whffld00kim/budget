@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20261009e" />
+  <link rel="stylesheet" href="css/style.css?v=20261012a" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -286,18 +286,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="js/app.js?v=20261009b"></script>
-<script src="js/cloud.js?v=20260929"></script>
+<script src="js/app.js?v=20261012a"></script>
+<script src="js/cloud.js?v=20261012a"></script>
 <script>
   if ('serviceWorker' in navigator) {
-    // 새 SW가 컨트롤을 가져가면 즉시 새로고침
+    // 새 SW가 컨트롤을 가져가면 즉시 새로고침. 처음 설치(이전 컨트롤러가 없던 첫 방문)에는 새로고침하지 않는다 —
+    // 그때는 이미 네트워크에서 새 파일을 받은 상태이고, 로그인 창이 열린 채 새로고침되면 로그인이 끊겼다 (2026-10-12).
+    // 못 올린 저장이 있는 채로 새로고침돼도 cloud.js 가 다음에 열 때 올린다
+    let hadController = !!navigator.serviceWorker.controller, reloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) { hadController = true; return; }
+      if (reloading) return;
+      reloading = true;
       window.location.reload();
     });
     navigator.serviceWorker.register('./sw.js').then(reg => {
       // 앱 열릴 때마다 업데이트 확인
-      reg.update();
-    });
+      if (reg) reg.update();
+    }).catch(() => {});
   }
 </script>
 </body>
