@@ -397,6 +397,17 @@ async function main() {
     await dev.close();
   });
 
+  await run('S12 브라우저가 저장소를 비우면 빈 값으로 서버를 덮지 않는다', async check => {
+    const server = makeServer(SEED); const dev = await newDevice(browser, base, server);
+    const page = await dev.open({ fixedTime: JAN }); await appReady(page);
+    await page.evaluate(() => { for (const k of Object.keys(localStorage)) if (k.startsWith('gaegybu_')) localStorage.removeItem(k); });
+    await addTx(page, { desc: '비운뒤입력' });
+    await sleep(3000);
+    check(server.ledger.updatedAt === 1000 && server.txs().length === 6, '서버가 그대로 (거래 6건, updatedAt 그대로)');
+    check((await toasts(page)).some(t => t.includes('저장 공간이 비워져')), '멈췄다는 안내');
+    await dev.close();
+  });
+
   await browser.close(); srv.close();
   const failed = results.filter(r => r.fails.length);
   console.log(`\n${results.length - failed.length}/${results.length} 통과`);
