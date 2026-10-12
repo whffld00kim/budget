@@ -166,7 +166,12 @@ let statsMode = 'month';
    유틸
 ============================================= */
 function fmt(n)   { return Math.abs(n).toLocaleString('ko-KR'); }
-function today()  { return new Date().toISOString().slice(0, 10); }
+// 기기 시간대 기준 오늘. toISOString() 은 UTC 라 한국 시간 0~9시엔 어제 날짜가 됐다 —
+// 1일 아침에 넣은 거래와 '이번달 입력하기'가 지난달로 들어갔다 (2026-10-12)
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 function uid()    { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
 
 function monthTxs(y, m) {
@@ -188,12 +193,13 @@ function fmtDate(d) {
 function monthLabel(y, m) { return `${y}년 ${MONTHS[m-1]}`; }
 function yearLabel(y)     { return `${y}년`; }
 
-function toast(msg) {
+// ms: 보여 줄 시간. 기본 2초. cloud.js 의 동기화 안내처럼 읽어야 하는 말은 더 길게 준다 (2026-10-12)
+function toast(msg, ms) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.remove('hidden');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.add('hidden'), 2000);
+  toast._t = setTimeout(() => el.classList.add('hidden'), ms > 0 ? ms : 2000);
 }
 
 /* =============================================
@@ -290,7 +296,8 @@ function renderHome() {
 
   // 주체별
   const subjEl = document.getElementById('home-subjects');
-  const dashExp = txs.filter(t=>t.type==='expense'&&t.subject==='-').reduce((a,t)=>a+t.amount,0);
+  // 지출은 주체를 나누지 않으므로 전부 합친다 (주체가 남아 있는 옛 지출이 빠져 총 지출과 어긋나지 않게, 2026-10-12)
+  const dashExp = txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
   const incomeRows = SUBJECTS.map(s => {
     const inc = txs.filter(t=>t.type==='income'&&t.subject===s).reduce((a,t)=>a+t.amount,0);
     return `<div class="subject-row">
@@ -350,7 +357,7 @@ function renderHistory() {
 function txItem(tx) {
   const isInc = tx.type === 'income';
   const sign  = isInc ? '+' : '-';
-  return `<div class="tx-item" data-id="${tx.id}">
+  return `<div class="tx-item" data-id="${escHtml(tx.id)}">
     <div class="tx-dot ${isInc?'inc':'exp'}">${isInc?'↑':'↓'}</div>
     <div class="tx-info">
       <div class="tx-top">
@@ -364,7 +371,7 @@ function txItem(tx) {
     </div>
     <div class="tx-right">
       <span class="tx-amount ${isInc?'inc':'exp'}">${sign}${Number(tx.amount).toLocaleString('ko-KR')}</span>
-      <button class="tx-del" data-del="${tx.id}" title="삭제">
+      <button class="tx-del" data-del="${escHtml(tx.id)}" title="삭제">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path fill-rule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 0 1 3.878.512.75.75 0 1 1-.256 1.478l-.209-.035-1.005 13.07a3 3 0 0 1-2.991 2.77H8.084a3 3 0 0 1-2.991-2.77L4.087 6.66l-.209.035a.75.75 0 0 1-.256-1.478A48.567 48.567 0 0 1 7.5 4.705v-.227c0-1.564 1.213-2.9 2.816-2.951a52.662 52.662 0 0 1 3.369 0c1.603.051 2.815 1.387 2.815 2.951Zm-6.136-1.452a51.196 51.196 0 0 1 3.273 0C14.39 3.05 15 3.684 15 4.478v.113a49.488 49.488 0 0 0-6 0v-.113c0-.794.609-1.428 1.364-1.452Zm-.355 5.945a.75.75 0 1 0-1.5.058l.347 9a.75.75 0 1 0 1.499-.058l-.346-9Zm5.48.058a.75.75 0 1 0-1.498-.058l-.347 9a.75.75 0 0 0 1.5.058l.345-9Z" clip-rule="evenodd"/>
         </svg>
@@ -466,7 +473,7 @@ function renderStats() {
 
   // ── 주체별 상세 ──
   const statsSubj = document.getElementById('stats-subjects');
-  const statsDashExp = txs.filter(t=>t.type==='expense'&&t.subject==='-').reduce((a,t)=>a+t.amount,0);
+  const statsDashExp = txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
   const statsIncRows = SUBJECTS.map(s => {
     const inc = txs.filter(t=>t.type==='income'&&t.subject===s).reduce((a,t)=>a+t.amount,0);
     return `<div class="subject-row">
@@ -530,7 +537,7 @@ function buildDonut(kind, txs, canvasId, legendId, emptyId) {
   legend.innerHTML = entries.map(([acc,val],i) => `
     <li>
       <span class="legend-dot" style="background:${colors[i]}"></span>
-      <span class="legend-name">${acc}</span>
+      <span class="legend-name">${escHtml(acc)}</span>
       <span class="legend-pct">${total?Math.round(val/total*100):0}%</span>
     </li>`).join('');
 }
@@ -565,6 +572,7 @@ function openEditModal(id) {
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
   document.body.style.overflow = '';
+  addingFixed = false;   // 고정 항목 추가를 취소했으면 다음 보통 입력이 고정 항목이 되지 않게 (2026-10-12)
 }
 
 function renderModalForm(tx) {
@@ -586,7 +594,7 @@ function renderModalForm(tx) {
     <!-- 날짜 -->
     <div class="form-group">
       <label class="form-label">날짜</label>
-      <input type="date" id="f-date" class="form-input" value="${dateVal}" />
+      <input type="date" id="f-date" class="form-input" value="${escHtml(dateVal)}" />
     </div>
 
     <!-- 계정 -->
@@ -634,7 +642,7 @@ function renderAccountChips() {
   if (!container) return;
 
   container.innerHTML = accounts.map(acc =>
-    `<button class="chip ${formAccount===acc?'selected':''}" data-acc="${acc}">${acc}</button>`
+    `<button class="chip ${formAccount===acc?'selected':''}" data-acc="${escHtml(acc)}">${escHtml(acc)}</button>`
   ).join('') + `<button class="chip add-chip" id="btn-add-acc">+ 추가</button>`;
 
   container.querySelectorAll('.chip[data-acc]').forEach(chip => {
@@ -735,15 +743,8 @@ function saveTransaction() {
 
   const amount = Math.floor(+amtStr);
 
-  if (editingId) {
-    const idx = txList.findIndex(t => t.id === editingId);
-    if (idx !== -1) txList[idx] = { id:editingId, date, type:formType, account:formAccount, subject:formSubject, description:desc, amount };
-    toast('수정되었습니다');
-  } else {
-    txList.push({ id:uid(), date, type:formType, account:formAccount, subject:formSubject, description:desc, amount });
-    toast('저장되었습니다');
-  }
-
+  // 고정 항목 추가는 거래 목록을 건드리지 않는다. 그전엔 txList 에 먼저 넣고 돌아가서, 메모리에만 있는
+  // 유령 거래가 홈 합계에 섞이고 다음 저장 때 같이 저장됐다 (2026-10-12)
   if (addingFixed) {
     addingFixed = false;
     fixedList.push({ id: uid(), type: formType, account: formAccount, subject: formSubject, description: desc, amount });
@@ -752,6 +753,15 @@ function saveTransaction() {
     renderFixed();
     toast('고정 항목이 추가되었습니다');
     return;
+  }
+
+  if (editingId) {
+    const idx = txList.findIndex(t => t.id === editingId);
+    if (idx !== -1) txList[idx] = { id:editingId, date, type:formType, account:formAccount, subject:formSubject, description:desc, amount };
+    toast('수정되었습니다');
+  } else {
+    txList.push({ id:uid(), date, type:formType, account:formAccount, subject:formSubject, description:desc, amount });
+    toast('저장되었습니다');
   }
 
   saveTx(txList);
@@ -768,6 +778,8 @@ function saveTransaction() {
 ============================================= */
 // 사용자 입력 문자열은 innerHTML에 넣기 전에 반드시 거친다 (S12, 2026-09-03).
 // 가구원이 넣은 계정명·메모가 상대 화면에서 HTML로 실행될 수 있어서다.
+// 2026-10-12: 계정 칩·도넛 범례의 계정명, 추가 창의 날짜 값, data-id 의 id 가 빠져 있던 것을 채웠다
+// (직접 만든 계정 이름이나 불러온 백업 파일의 값이 그대로 HTML 로 들어갔다).
 // undefined/숫자가 와도 죽지 않게 String()으로 감싼다.
 function escHtml(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -807,8 +819,8 @@ function renderFixed() {
           <div class="fixed-desc">${escHtml(item.description)}</div>
         </div>
         <div class="fixed-right">
-          <div class="fixed-amt ${amtClass}" data-id="${item.id}">${amtDisplay}</div>
-          <button class="fixed-del-btn" data-id="${item.id}">✕</button>
+          <div class="fixed-amt ${amtClass}" data-id="${escHtml(item.id)}">${amtDisplay}</div>
+          <button class="fixed-del-btn" data-id="${escHtml(item.id)}">✕</button>
         </div>
       </div>`;
   }).join('');
@@ -865,15 +877,15 @@ function renderTransfer() {
           ${acc.items.map(it => `
             <div class="tr-item">
               <span class="tr-item-name">${escHtml(it.name)}</span>
-              <span class="tr-item-day">${it.day}일</span>
-              <span class="tr-item-amt" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
-              <button class="tr-item-del" data-sec="deduct" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+              <span class="tr-item-day">${escHtml(it.day)}일</span>
+              <span class="tr-item-amt" data-sec="deduct" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="deduct" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">✕</button>
             </div>`).join('')}
           <div class="tr-add-row">
-            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="deduct" />
-            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="deduct" />
-            <input class="tr-input tr-input-xs" type="number" placeholder="일" data-add-day data-aid="${acc.id}" data-sec="deduct" />
-            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="deduct">추가</button>
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <input class="tr-input tr-input-xs" type="number" placeholder="일" data-add-day data-aid="${escHtml(acc.id)}" data-sec="deduct" />
+            <button class="tr-add-btn" data-aid="${escHtml(acc.id)}" data-sec="deduct">추가</button>
           </div>
         </div>`;
       }).join('') +
@@ -902,14 +914,14 @@ function renderTransfer() {
             <div class="tr-item">
               <span class="tr-item-name">${escHtml(it.name)}</span>
               <span class="tr-item-day"></span>
-              <span class="tr-item-amt" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">${it.amount.toLocaleString('ko-KR')}</span>
-              <button class="tr-item-del" data-sec="living" data-aid="${acc.id}" data-iid="${it.id}">✕</button>
+              <span class="tr-item-amt" data-sec="living" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">${it.amount.toLocaleString('ko-KR')}</span>
+              <button class="tr-item-del" data-sec="living" data-aid="${escHtml(acc.id)}" data-iid="${escHtml(it.id)}">✕</button>
             </div>`).join('')}
           <div class="tr-add-row">
-            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${acc.id}" data-sec="living" />
-            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${acc.id}" data-sec="living" />
+            <input class="tr-input" placeholder="항목명" data-add-name data-aid="${escHtml(acc.id)}" data-sec="living" />
+            <input class="tr-input tr-input-sm" type="number" placeholder="금액" data-add-amt data-aid="${escHtml(acc.id)}" data-sec="living" />
             <div></div>
-            <button class="tr-add-btn" data-aid="${acc.id}" data-sec="living">추가</button>
+            <button class="tr-add-btn" data-aid="${escHtml(acc.id)}" data-sec="living">추가</button>
           </div>
         </div>`;
       }).join('') +
@@ -920,8 +932,8 @@ function renderTransfer() {
            <div class="tr-item">
              <span class="tr-item-name">${escHtml(c.name)}</span>
              <span class="tr-item-day"></span>
-             <span class="tr-item-amt tr-card-amt" data-cid="${c.id}">${c.amount.toLocaleString('ko-KR')}</span>
-             <button class="tr-card-del" data-cid="${c.id}">✕</button>
+             <span class="tr-item-amt tr-card-amt" data-cid="${escHtml(c.id)}">${c.amount.toLocaleString('ko-KR')}</span>
+             <button class="tr-card-del" data-cid="${escHtml(c.id)}">✕</button>
            </div>`).join('')}
          <div class="tr-add-row">
            <input class="tr-input" placeholder="카드명" id="new-card-name" />
@@ -1098,13 +1110,16 @@ function backupData() {
   const blob = new Blob([json], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
+  const date = today();
   a.href     = url;
   a.download = `가계부_백업_${date}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);   // 바로 지우면 일부 브라우저가 내려받기를 시작하지 못한다
   toast('백업 파일이 저장되었습니다.');
 }
+
+// 배열이어야 하는 자리를 배열로 (백업 파일이 손으로 고쳐졌거나 옛 형식이어도 앱이 죽지 않게)
+const toArr = v => (v == null) ? [] : (Array.isArray(v) ? v : Object.values(v));
 
 function restoreData(file) {
   if (!file) return;
@@ -1112,22 +1127,43 @@ function restoreData(file) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
+      if (!data || !Array.isArray(data.transactions)) throw new Error('올바른 백업 파일이 아닙니다.');
+      // 거래마다 날짜·구분·금액 형식을 본다 (2026-10-12). 날짜 없는 거래 하나가 들어오면 월 계산이 멈춰
+      // 앱 전체가 안 열리므로, 하나라도 깨져 있으면 파일째 거부한다
+      data.transactions.forEach((t, i) => {
+        if (!t || typeof t.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(t.date) ||
+            (t.type !== 'income' && t.type !== 'expense') || !Number.isFinite(Number(t.amount))) {
+          throw new Error(`${i + 1}번째 거래의 날짜·구분·금액이 올바르지 않습니다.`);
+        }
+      });
       if (!confirm(`${data.transactions.length}개의 거래 내역을 불러옵니다.\n현재 데이터는 덮어씌워집니다. 계속할까요?`)) return;
-      txList = data.transactions;
+      txList = data.transactions.map(t => ({ ...t, id: String(t.id || uid()), amount: Math.floor(Number(t.amount)) }));
       saveTx(txList);
-      saveCustom(data.custom || { income: [], expense: [] });
-      if (data.fixed)     saveFixed(data.fixed);
+      // 파일에 없는 항목은 지금 것을 그대로 둔다 (옛 백업엔 고정·이체 항목이 없다). 있으면 모양을 맞춰 넣는다
+      if (data.custom)    saveCustom({ ...data.custom, income: toArr(data.custom.income), expense: toArr(data.custom.expense) });
+      if (data.fixed)     saveFixed(toArr(data.fixed));
       if (data.irregular) saveIrr(data.irregular);
-      if (data.deduct)    saveDeduct(data.deduct);
-      if (data.living)    saveLiving(data.living);
-      renderHome();
+      if (data.deduct)    saveDeduct({ ...data.deduct, accounts: toArr(data.deduct.accounts).map(a => ({ ...a, items: toArr(a && a.items) })) });
+      if (data.living)    saveLiving({ ...data.living, accounts: toArr(data.living.accounts).map(a => ({ ...a, items: toArr(a && a.items) })), cards: toArr(data.living.cards) });
+      // 메모리의 고정·이체 목록도 파일 것으로 바꾼다 (2026-10-12). 그전엔 저장소만 바뀌고 메모리는 옛것이라,
+      // 고정 탭에서 금액 하나만 고쳐도 옛 목록이 되살아나 불러오기가 무효가 됐다
+      window.__initApp();
       toast('불러오기 완료!');
     } catch (err) {
       alert('파일을 읽는 중 오류가 발생했습니다:\n' + err.message);
     }
   };
   reader.readAsText(file);
+}
+
+// 지금 보고 있는 페이지를 다시 그린다 (다른 기기의 변경을 반영했거나 불러온 뒤)
+function renderActivePage() {
+  const active = document.querySelector('.page.active');
+  if (active?.id === 'page-home')     renderHome();
+  if (active?.id === 'page-history')  renderHistory();
+  if (active?.id === 'page-stats')    renderStats();
+  if (active?.id === 'page-fixed')    renderFixed();
+  if (active?.id === 'page-transfer') renderTransfer();
 }
 
 /* =============================================
@@ -1147,8 +1183,9 @@ window.__initApp = function () {
   livingData = loadLiving();
   updateMonthLabels();
 
-  // 재호출이면 다시 그리기만 한다 (리스너를 두 번 붙이면 클릭이 두 번 먹는다)
-  if (__eventsBound) { renderHome(); return; }
+  // 재호출이면 다시 그리기만 한다 (리스너를 두 번 붙이면 클릭이 두 번 먹는다).
+  // 홈만 그리면 통계·고정·이체 탭을 보던 중에는 옛 화면이 남았다 → 보던 페이지를 그린다 (2026-10-12)
+  if (__eventsBound) { renderActivePage(); return; }
   __eventsBound = true;
 
   // 페이지 네비게이션

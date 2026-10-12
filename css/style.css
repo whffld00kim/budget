@@ -766,7 +766,13 @@ input  { font-family: inherit; }
   font-size: 14px;
   font-weight: 600;
   z-index: 300;
-  white-space: nowrap;
+  /* 긴 동기화 안내는 줄을 바꾼다 (2026-10-12: nowrap 이라 폰에서 화면 밖으로 잘렸다). 짧은 말은 종전처럼 한 줄.
+     width: max-content 가 없으면 left:50% 때문에 폭이 화면의 반으로 잡혀 몇 글자마다 줄이 바뀐다 */
+  white-space: pre-line;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  line-height: 1.45;
   box-shadow: var(--shadow-md);
 }
 .toast.hidden { display: none; }
@@ -1318,7 +1324,7 @@ input  { font-family: inherit; }
   .modal-top { padding-top: 20px; }
   .modal-body { padding-bottom: 24px; }
 
-  .toast { bottom: 28px; left: calc(50% + var(--rail-w) / 2); }
+  .toast { bottom: 28px; left: calc(50% + var(--rail-w) / 2); max-width: calc(100vw - var(--rail-w) - 32px); }
 }
 
 /* ============ 폴드7 펼친 화면 · 태블릿 세로 (2026-10-09) ============
