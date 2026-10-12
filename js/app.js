@@ -166,7 +166,12 @@ let statsMode = 'month';
    유틸
 ============================================= */
 function fmt(n)   { return Math.abs(n).toLocaleString('ko-KR'); }
-function today()  { return new Date().toISOString().slice(0, 10); }
+// 기기 시간대 기준 오늘. toISOString() 은 UTC 라 한국 시간 0~9시엔 어제 날짜가 됐다 —
+// 1일 아침에 넣은 거래와 '이번달 입력하기'가 지난달로 들어갔다 (2026-10-12)
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 function uid()    { return 't' + Date.now() + Math.random().toString(36).slice(2,6); }
 
 function monthTxs(y, m) {
@@ -291,7 +296,8 @@ function renderHome() {
 
   // 주체별
   const subjEl = document.getElementById('home-subjects');
-  const dashExp = txs.filter(t=>t.type==='expense'&&t.subject==='-').reduce((a,t)=>a+t.amount,0);
+  // 지출은 주체를 나누지 않으므로 전부 합친다 (주체가 남아 있는 옛 지출이 빠져 총 지출과 어긋나지 않게, 2026-10-12)
+  const dashExp = txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
   const incomeRows = SUBJECTS.map(s => {
     const inc = txs.filter(t=>t.type==='income'&&t.subject===s).reduce((a,t)=>a+t.amount,0);
     return `<div class="subject-row">
@@ -467,7 +473,7 @@ function renderStats() {
 
   // ── 주체별 상세 ──
   const statsSubj = document.getElementById('stats-subjects');
-  const statsDashExp = txs.filter(t=>t.type==='expense'&&t.subject==='-').reduce((a,t)=>a+t.amount,0);
+  const statsDashExp = txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
   const statsIncRows = SUBJECTS.map(s => {
     const inc = txs.filter(t=>t.type==='income'&&t.subject===s).reduce((a,t)=>a+t.amount,0);
     return `<div class="subject-row">
@@ -566,6 +572,7 @@ function openEditModal(id) {
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
   document.body.style.overflow = '';
+  addingFixed = false;   // 고정 항목 추가를 취소했으면 다음 보통 입력이 고정 항목이 되지 않게 (2026-10-12)
 }
 
 function renderModalForm(tx) {
@@ -736,15 +743,8 @@ function saveTransaction() {
 
   const amount = Math.floor(+amtStr);
 
-  if (editingId) {
-    const idx = txList.findIndex(t => t.id === editingId);
-    if (idx !== -1) txList[idx] = { id:editingId, date, type:formType, account:formAccount, subject:formSubject, description:desc, amount };
-    toast('수정되었습니다');
-  } else {
-    txList.push({ id:uid(), date, type:formType, account:formAccount, subject:formSubject, description:desc, amount });
-    toast('저장되었습니다');
-  }
-
+  // 고정 항목 추가는 거래 목록을 건드리지 않는다. 그전엔 txList 에 먼저 넣고 돌아가서, 메모리에만 있는
+  // 유령 거래가 홈 합계에 섞이고 다음 저장 때 같이 저장됐다 (2026-10-12)
   if (addingFixed) {
     addingFixed = false;
     fixedList.push({ id: uid(), type: formType, account: formAccount, subject: formSubject, description: desc, amount });
@@ -753,6 +753,15 @@ function saveTransaction() {
     renderFixed();
     toast('고정 항목이 추가되었습니다');
     return;
+  }
+
+  if (editingId) {
+    const idx = txList.findIndex(t => t.id === editingId);
+    if (idx !== -1) txList[idx] = { id:editingId, date, type:formType, account:formAccount, subject:formSubject, description:desc, amount };
+    toast('수정되었습니다');
+  } else {
+    txList.push({ id:uid(), date, type:formType, account:formAccount, subject:formSubject, description:desc, amount });
+    toast('저장되었습니다');
   }
 
   saveTx(txList);
@@ -1099,7 +1108,7 @@ function backupData() {
   const blob = new Blob([json], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
+  const date = today();
   a.href     = url;
   a.download = `가계부_백업_${date}.json`;
   a.click();
