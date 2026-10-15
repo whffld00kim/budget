@@ -1,1 +1,4 @@
 node_modules/
+
+# Firebase Hosting 배포 임시 파일
+.firebase/

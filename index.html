@@ -10,7 +10,7 @@
   <title>우리집 가계부</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="css/style.css?v=20261012a" />
+  <link rel="stylesheet" href="css/style.css?v=20261015" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -286,8 +286,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="js/app.js?v=20261012a"></script>
-<script src="js/cloud.js?v=20261012a"></script>
+<script src="js/app.js?v=20261015"></script>
+<script src="js/cloud.js?v=20261015"></script>
+<script>
+// 주소 이전 (2026-10-15): github.io 공용 주소 → 전용 주소. 옛 주소에선 맨 위에 이동 띠(로그인 화면 위에도).
+// 가계부는 서버에 있다. 다만 아직 못 올린 변경이 있으면 먼저 올라가게 안내한다
+(function () {
+  if (!/(^|\.)github\.io$/.test(location.hostname)) return;
+  let dirty = false;
+  try { dirty = !!(JSON.parse(localStorage.getItem('gaegybu_cloud_meta') || '{}').dirty); } catch (e) {}
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;background:#f59e0b;color:#111;padding:10px 12px;text-align:center;font-size:14px;line-height:1.5;font-weight:600';
+  bar.innerHTML = '우리집 가계부가 새 주소로 옮겼습니다 ' + (dirty ? '<br><small>아직 서버에 못 올린 변경이 있습니다 — 인터넷이 연결된 채 잠시 기다린 뒤 이동하세요</small> ' : '') +
+    '<a href="https://minsung-budget.web.app/" style="margin-left:8px;padding:4px 12px;border-radius:6px;background:#111;color:#fff;text-decoration:none">새 주소로 이동</a>';
+  document.body.appendChild(bar);
+})();
+</script>
 <script>
   if ('serviceWorker' in navigator) {
     // 새 SW가 컨트롤을 가져가면 즉시 새로고침. 처음 설치(이전 컨트롤러가 없던 첫 방문)에는 새로고침하지 않는다 —

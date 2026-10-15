@@ -71,7 +71,7 @@ async function newDevice(browser, base, server) {
   const ctx = await browser.newContext({ serviceWorkers: 'block', timezoneId: 'Asia/Seoul', locale: 'ko-KR', viewport: { width: 400, height: 800 } });
   const dev = { ctx, server, online: true, pending: [], user: USER, errors: [], pages: [] };
   await ctx.exposeBinding('__fakeDb', async (source, op, args) => {
-    if (op === 'user') return dev.user;
+    if (op === 'user') { if (dev.userDelay) await sleep(dev.userDelay); return dev.user; }   // userDelay: 로그인 확인이 늦는 상황 (2026-10-15)
     if (op === 'signin') { dev.user = USER; return USER; }
     if (op === 'signout') { dev.user = null; return null; }
     if (op === 'connected') return dev.online;
@@ -405,6 +405,31 @@ async function main() {
     await sleep(3000);
     check(server.ledger.updatedAt === 1000 && server.txs().length === 6, '서버가 그대로 (거래 6건, updatedAt 그대로)');
     check((await toasts(page)).some(t => t.includes('저장 공간이 비워져')), '멈췄다는 안내');
+    await dev.close();
+  });
+
+  await run('S13 로그인했던 기기는 로그인 확인이 늦어도 사본으로 바로 열리고, 그 사이 입력은 확인 뒤 올라간다 (2026-10-15)', async check => {
+    const server = makeServer(SEED); const dev = await newDevice(browser, base, server);
+    let page = await dev.open({ fixedTime: JAN }); await appReady(page);
+    await dev.kill(page);
+    dev.userDelay = 3000;
+    page = await dev.open({ fixedTime: JAN });
+    let opened = true; try { await appReady(page, 1500); } catch { opened = false; }
+    check(opened, '1.5초 안에 화면이 열림(로그인 확인 3초 전)');
+    await addTx(page, { desc: '확인전입력' });
+    await sleep(500);
+    check(!server.txs().some(t => t.description === '확인전입력'), '로그인 확인 전엔 올리지 않음');
+    check(await waitFor(() => server.txs().some(t => t.description === '확인전입력'), 8000), '확인 뒤 서버에 올라감');
+    await dev.close();
+  });
+
+  await run('S14 사본 없이 처음 여는 기기는 지금처럼 로그인 확인을 기다린다', async check => {
+    const server = makeServer(SEED); const dev = await newDevice(browser, base, server);
+    dev.userDelay = 2000;
+    const page = await dev.open({ fixedTime: JAN });
+    let early = true; try { await appReady(page, 1000); } catch { early = false; }
+    check(!early, '1초 안엔 열리지 않음(사본이 없으니)');
+    await appReady(page);
     await dev.close();
   });
 

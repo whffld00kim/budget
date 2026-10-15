@@ -92,6 +92,7 @@
   let ready = false;       // app.js 초기화까지 끝났는지
   let dirty = false;       // 올리지 못한 로컬 변경이 있는지
   let connected = false;   // RTDB 실시간 연결 (.info/connected)
+  let preAuth = false;     // 로그인 확인 전에 기기 사본으로 연 상태 (2026-10-15, 아래 openBeforeAuth)
 
   const _setItem = localStorage.setItem.bind(localStorage);
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -237,10 +238,10 @@
   // 함수 하나하나를 감싸는 대신 여기 한 곳만 가로채면 불러오기(restoreData)까지 다 잡힌다.
   localStorage.setItem = function (k, v) {
     _setItem(k, v);
-    if (!muted && ready && WATCH.has(k)) {
+    if (!muted && (ready || preAuth) && WATCH.has(k)) {
       dirty = true;
       writeMeta({ dirty: true });
-      schedulePush();
+      if (ready) schedulePush();   // 로그인 확인 전(preAuth)엔 올리지 않고 '못 올린 변경'으로만 남긴다 — 확인 뒤 startWithServer 가 처리
     }
   };
 
@@ -347,7 +348,31 @@
   }
 
   /* ---------- 로그인 ---------- */
+  // 기기 사본으로 먼저 열기 (2026-10-15 — 도겸 수면·재무현황과 같은 방식)
+  //   전엔 로그인 확인 → 가구 id → 내려받기(또는 8초 기다린 뒤 사본)를 거쳐서야 화면이 떴다. 로그인했던 기기에 사본과 가구 id 가
+  //   있으면 그걸로 바로 그린다. 그 사이 고친 것은 오프라인 편집과 똑같이 '못 올린 변경'(meta.dirty)으로만 남고,
+  //   로그인 확인 뒤 start() → startWithServer 가 기존 규칙대로 처리한다(서버가 그대로면 올리고, 다른 기기가 먼저 저장했으면 알림).
+  //   ?nocache=1 은 사본 없이 열기(비교용)
+  function openBeforeAuth() {
+    try {
+      if (/[?&]nocache=1/.test(location.search)) return;
+      if (localStorage.getItem('signed_in_before') !== '1') return;
+      const meta = readMeta();
+      if (!hasLocal() || !meta.hid || typeof window.__initApp !== 'function') return;
+      baseUpdatedAt = Number(meta.base) || 0;
+      dirty = !!meta.dirty;
+      preAuth = true;
+      window.__initApp();
+      hideAuth(); setStatus('');
+      note('최신 내용을 확인하는 중…', 1500);
+    } catch (e) {
+      preAuth = false;
+      console.warn('[cloud] 사본으로 먼저 열기 실패 — 로그인 확인을 기다린다', e);
+    }
+  }
+
   function initAuth() {
+    openBeforeAuth();
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
@@ -386,6 +411,7 @@
     });
 
     auth.onAuthStateChanged(async user => {
+      preAuth = false;
       if (!user) { uid = null; ready = false; markSignedIn(false); showAuth(); setStatus(''); return; }
       uid = user.uid;
       try {
