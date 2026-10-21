@@ -1113,7 +1113,6 @@ input  { font-family: inherit; }
 .tr-item-name { flex: 1; color: var(--text1); }
 .tr-item-day  { width: 28px; font-size: 11px; color: var(--text3); text-align: center; flex-shrink: 0; }
 .tr-item-amt  { font-weight: 600; color: var(--text1); cursor: pointer; padding: 1px 4px; border-radius: 4px; background: var(--bg); flex-shrink: 0; }
-.tr-amt-empty { color: var(--text3); }   /* 생활비금액을 아직 안 넣었을 때 「입력」 (2026-10-21) */
 .tr-item-del  { font-size: 11px; color: var(--text3); flex-shrink: 0; padding: 2px 4px; }
 .tr-add-row {
   display: grid;

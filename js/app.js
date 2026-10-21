@@ -114,7 +114,9 @@ function loadDeduct() {
 }
 function saveDeduct(data) { try { localStorage.setItem(STORAGE_DEDUCT, JSON.stringify(data)); } catch(e) {} }
 
-// 생활비금액 (2026-10-21, 이체 탭 결과 카드): living.budget — 원 단위 숫자 한 칸, 아직 안 넣었으면 칸이 없다(비어 있음).
+// 생활비금액 (2026-10-21, 이체 탭 결과 카드): living.budget — 원 단위 숫자 한 칸. 칸이 없으면 기본 500만원(사용자 요청),
+// 한 번 고치면 그 값이 저장돼 다음부터 계속 그 값으로 나온다
+const DEFAULT_LIVING_BUDGET = 5000000;
 // 옛 사본·백업엔 이 칸이 없고 손으로 고친 파일엔 글자가 들어 있을 수 있어, 0 이상 숫자가 아니면 비어 있음으로 둔다
 function withLivingBudget(d) {
   const out = { ...(d || {}) };
@@ -911,8 +913,8 @@ function renderTransfer() {
     const cardTotal = livingData.cards.reduce((s, c) => s + c.amount, 0);
     // 결과 카드 (2026-10-21 사용자 요청): 이체금액 = 생활비금액 − 생활비통장 제외 금액(항목+카드). 생활비금액이 비면 「-」
     const exclude   = accTotal + cardTotal;
-    const budget    = Number.isFinite(livingData.budget) ? livingData.budget : null;
-    const transfer  = budget === null ? null : budget - exclude;
+    const budget    = Number.isFinite(livingData.budget) ? livingData.budget : DEFAULT_LIVING_BUDGET;
+    const transfer  = budget - exclude;
 
     livingEl.innerHTML = `
       <div class="tr-section-title">생활비 이체금액 계산</div>` +
@@ -959,14 +961,14 @@ function renderTransfer() {
        <div class="tr-result-card">
          <div class="tr-result-row">
            <span>생활비금액</span>
-           <span class="tr-item-amt tr-budget-amt${budget === null ? ' tr-amt-empty' : ''}" id="living-budget">${budget === null ? '입력' : budget.toLocaleString('ko-KR')}</span>
+           <span class="tr-item-amt tr-budget-amt" id="living-budget">${budget.toLocaleString('ko-KR')}</span>
          </div>
          <div class="tr-result-row">
            <span>생활비통장 제외 금액 합계</span><span>${exclude.toLocaleString('ko-KR')}</span>
          </div>
          <div class="tr-result-row tr-result-total">
            <span>생활비통장 이체금액</span>
-           <span${transfer !== null && transfer < 0 ? ' style="color:var(--expense)"' : ''}>${transfer === null ? '-' : transfer.toLocaleString('ko-KR')}</span>
+           <span${transfer < 0 ? ' style="color:var(--expense)"' : ''}>${transfer.toLocaleString('ko-KR')}</span>
          </div>
        </div>`;
   }
@@ -1006,11 +1008,11 @@ function renderTransfer() {
     });
   });
 
-  // 생활비금액 수정 (2026-10-21) — 다른 금액처럼 눌러서 고친다. 비우고 확인하면 다시 「입력」(비어 있음)
+  // 생활비금액 수정 (2026-10-21) — 다른 금액처럼 눌러서 고친다. 고친 값이 저장돼 계속 기본으로 나온다. 비우고 확인하면 500만원으로
   const budgetEl = document.getElementById('living-budget');
   if (budgetEl) {
     budgetEl.addEventListener('click', () => {
-      const val = prompt('생활비금액:', Number.isFinite(livingData.budget) ? livingData.budget : '');
+      const val = prompt('생활비금액:', Number.isFinite(livingData.budget) ? livingData.budget : DEFAULT_LIVING_BUDGET);
       if (val === null) return;
       if (!val.trim()) {
         delete livingData.budget;
