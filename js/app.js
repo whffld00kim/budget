@@ -114,11 +114,20 @@ function loadDeduct() {
 }
 function saveDeduct(data) { try { localStorage.setItem(STORAGE_DEDUCT, JSON.stringify(data)); } catch(e) {} }
 
+// 생활비금액 (2026-10-21, 이체 탭 결과 카드): living.budget — 원 단위 숫자 한 칸, 아직 안 넣었으면 칸이 없다(비어 있음).
+// 옛 사본·백업엔 이 칸이 없고 손으로 고친 파일엔 글자가 들어 있을 수 있어, 0 이상 숫자가 아니면 비어 있음으로 둔다
+function withLivingBudget(d) {
+  const out = { ...(d || {}) };
+  const v = out.budget;
+  const n = (typeof v === 'number' || (typeof v === 'string' && v.trim() !== '')) ? Number(String(v).replace(/,/g, '')) : NaN;
+  if (Number.isFinite(n) && n >= 0) out.budget = Math.floor(n); else delete out.budget;
+  return out;
+}
 function loadLiving() {
   try {
     const raw = localStorage.getItem(STORAGE_LIVING);
     if (!raw) { const d = JSON.parse(JSON.stringify(INIT_LIVING)); saveLiving(d); return d; }
-    return JSON.parse(raw);
+    return withLivingBudget(JSON.parse(raw));
   } catch { return JSON.parse(JSON.stringify(INIT_LIVING)); }
 }
 function saveLiving(data) { try { localStorage.setItem(STORAGE_LIVING, JSON.stringify(data)); } catch(e) {} }
@@ -262,14 +271,16 @@ function setStatsMode(mode) {
    태블릿 가로 (2026-09-28)
    넓은 가로 화면에서는 최근 내역을 화면 높이에 맞는 만큼 보여 준다 (폰은 종전대로 6건)
 ============================================= */
-const WIDE_MQ = window.matchMedia('(min-width: 900px) and (orientation: landscape)');
+// css/style.css 태블릿 블록과 같은 조건 — 높이 500 미만(폰 가로)은 뺀다 (2026-10-21)
+const WIDE_MQ = window.matchMedia('(min-width: 900px) and (orientation: landscape) and (min-height: 500px)');
 // 폴드7 펼친 화면·태블릿 세로 (2026-10-09) — css/style.css 맨 끝 fold 블록과 같은 조건. 홈 왼쪽 단이 화면 높이를 채우니 오른쪽 최근 내역도 그만큼
 const FOLD_MQ = window.matchMedia('(min-width: 600px) and (max-width: 899px) and (min-height: 500px), (min-width: 600px) and (orientation: portrait)');
 function recentCount() {
-  // 태블릿 가로: 헤더 66 + 위 여백 20 + 「최근 내역」 줄 34 + 아래 여백 28, 한 줄 84
-  if (WIDE_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 148) / 84));
-  // 폴드: 헤더 58 + 위 여백 16 + 「최근 내역」 줄 34 + 아래 탭 68 + 아래 여백 24, 한 줄 84
-  if (FOLD_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 200) / 84));
+  // 한 줄 높이는 2026-10-21 실측 (전엔 84로 잡아 폴드에서 한 줄 넘게 비었다). 「최근 내역」 줄은 실측 30에 글꼴 차이 여유 4
+  // 태블릿 가로: 헤더 66 + 위 여백 20 + 「최근 내역」 줄 34 + 아래 여백 28, 한 줄 최소 76 (행 min-height 68 + 간격 8 — 남는 높이는 행이 나눠 갖는다)
+  if (WIDE_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 148) / 76));
+  // 폴드: 헤더 58 + 위 여백 16 + 「최근 내역」 줄 34 + 아래 탭 68 + 아래 여백 24, 한 줄 72 (행 64 + 간격 8)
+  if (FOLD_MQ.matches) return Math.max(6, Math.floor((window.innerHeight - 200) / 72));
   return 6;
 }
 
@@ -898,7 +909,10 @@ function renderTransfer() {
     const accTotal  = livingData.accounts.reduce((s, acc) =>
       s + acc.items.reduce((a, it) => a + it.amount, 0), 0);
     const cardTotal = livingData.cards.reduce((s, c) => s + c.amount, 0);
-    const transfer  = accTotal + cardTotal;
+    // 결과 카드 (2026-10-21 사용자 요청): 이체금액 = 생활비금액 − 생활비통장 제외 금액(항목+카드). 생활비금액이 비면 「-」
+    const exclude   = accTotal + cardTotal;
+    const budget    = Number.isFinite(livingData.budget) ? livingData.budget : null;
+    const transfer  = budget === null ? null : budget - exclude;
 
     livingEl.innerHTML = `
       <div class="tr-section-title">생활비 이체금액 계산</div>` +
@@ -944,22 +958,23 @@ function renderTransfer() {
        </div>
        <div class="tr-result-card">
          <div class="tr-result-row">
-           <span>항목 합계</span><span>${accTotal.toLocaleString('ko-KR')}</span>
+           <span>생활비금액</span>
+           <span class="tr-item-amt tr-budget-amt${budget === null ? ' tr-amt-empty' : ''}" id="living-budget">${budget === null ? '입력' : budget.toLocaleString('ko-KR')}</span>
          </div>
          <div class="tr-result-row">
-           <span>카드 합계</span><span>${cardTotal.toLocaleString('ko-KR')}</span>
+           <span>생활비통장 제외 금액 합계</span><span>${exclude.toLocaleString('ko-KR')}</span>
          </div>
          <div class="tr-result-row tr-result-total">
            <span>생활비통장 이체금액</span>
-           <span style="color:var(--expense)">-${transfer.toLocaleString('ko-KR')}</span>
+           <span${transfer !== null && transfer < 0 ? ' style="color:var(--expense)"' : ''}>${transfer === null ? '-' : transfer.toLocaleString('ko-KR')}</span>
          </div>
        </div>`;
   }
 
   // ── 이벤트 바인딩 ──
 
-  // 금액 탭해서 수정
-  document.querySelectorAll('.tr-item-amt').forEach(el => {
+  // 금액 탭해서 수정 (통장 항목만 — 카드·생활비금액 알약은 data-sec 가 없고 아래에서 따로 받는다)
+  document.querySelectorAll('.tr-item-amt[data-sec]').forEach(el => {
     el.addEventListener('click', () => {
       const { sec, aid, iid } = el.dataset;
       const data = sec === 'deduct' ? deductData : livingData;
@@ -990,6 +1005,24 @@ function renderTransfer() {
       renderTransfer();
     });
   });
+
+  // 생활비금액 수정 (2026-10-21) — 다른 금액처럼 눌러서 고친다. 비우고 확인하면 다시 「입력」(비어 있음)
+  const budgetEl = document.getElementById('living-budget');
+  if (budgetEl) {
+    budgetEl.addEventListener('click', () => {
+      const val = prompt('생활비금액:', Number.isFinite(livingData.budget) ? livingData.budget : '');
+      if (val === null) return;
+      if (!val.trim()) {
+        delete livingData.budget;
+      } else {
+        const amt = Math.floor(+val.replace(/,/g,''));
+        if (isNaN(amt) || amt < 0) { toast('올바른 금액을 입력하세요'); return; }
+        livingData.budget = amt;
+      }
+      saveLiving(livingData);
+      renderTransfer();
+    });
+  }
 
   // 항목 삭제
   document.querySelectorAll('.tr-item-del').forEach(btn => {
@@ -1144,7 +1177,8 @@ function restoreData(file) {
       if (data.fixed)     saveFixed(toArr(data.fixed));
       if (data.irregular) saveIrr(data.irregular);
       if (data.deduct)    saveDeduct({ ...data.deduct, accounts: toArr(data.deduct.accounts).map(a => ({ ...a, items: toArr(a && a.items) })) });
-      if (data.living)    saveLiving({ ...data.living, accounts: toArr(data.living.accounts).map(a => ({ ...a, items: toArr(a && a.items) })), cards: toArr(data.living.cards) });
+      // 생활비금액(budget)은 파일에 있으면 그대로, 없으면(옛 백업) 비어 있음 (2026-10-21)
+      if (data.living)    saveLiving(withLivingBudget({ ...data.living, accounts: toArr(data.living.accounts).map(a => ({ ...a, items: toArr(a && a.items) })), cards: toArr(data.living.cards) }));
       // 메모리의 고정·이체 목록도 파일 것으로 바꾼다 (2026-10-12). 그전엔 저장소만 바뀌고 메모리는 옛것이라,
       // 고정 탭에서 금액 하나만 고쳐도 옛 목록이 되살아나 불러오기가 무효가 됐다
       window.__initApp();

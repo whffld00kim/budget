@@ -1113,6 +1113,7 @@ input  { font-family: inherit; }
 .tr-item-name { flex: 1; color: var(--text1); }
 .tr-item-day  { width: 28px; font-size: 11px; color: var(--text3); text-align: center; flex-shrink: 0; }
 .tr-item-amt  { font-weight: 600; color: var(--text1); cursor: pointer; padding: 1px 4px; border-radius: 4px; background: var(--bg); flex-shrink: 0; }
+.tr-amt-empty { color: var(--text3); }   /* 생활비금액을 아직 안 넣었을 때 「입력」 (2026-10-21) */
 .tr-item-del  { font-size: 11px; color: var(--text3); flex-shrink: 0; padding: 2px 4px; }
 .tr-add-row {
   display: grid;
@@ -1178,8 +1179,9 @@ input  { font-family: inherit; }
    - 하단 네비게이션 → 왼쪽 세로 레일 (가로 화면은 높이가 아깝다)
    - 페이지마다 두 단
    - 입력창은 아래에서 올라오는 시트 대신 가운데 창
-   이 블록은 파일 맨 끝에 둔다 — 노치 대응(@supports) 규칙보다 뒤여야 이긴다 */
-@media (min-width: 900px) and (orientation: landscape) {
+   이 블록은 파일 맨 끝에 둔다 — 노치 대응(@supports) 규칙보다 뒤여야 이긴다
+   높이 500 미만(폰 가로, 960×411 등)은 뺀다 — 폭만 보고 태블릿 배치가 걸려 글자만 커지고 잔액이 넘쳤다 (2026-10-21) */
+@media (min-width: 900px) and (orientation: landscape) and (min-height: 500px) {
   :root { --rail-w: 92px; }
 
   body { background: var(--bg); }
@@ -1354,6 +1356,22 @@ input  { font-family: inherit; }
   #page-home .home-col { display: flex; flex-direction: column; min-height: 0; }
   #page-home .home-col-recent { grid-column: 2; grid-row: 1 / span 2; }
   .balance-card { margin-bottom: 14px; }
+  /* 잔액 카드: 금액이 길어(9~10자리) 한 줄에 안 들어가면 이월잔액을 아래 줄로 — 왼쪽 단이 좁아 카드 밖으로 넘쳐 잘렸다 (2026-10-21).
+     글자 크기는 폰 그대로. 한 줄에 들어가면 폰과 똑같이 가운데 세로선: 진짜 구분선(.balance-divider) 대신 이월잔액 칸 왼쪽 틈
+     (폰과 같은 12+1+12px)의 가운데에 그린다. 아래 줄로 내려가면 그 칸이 줄 맨 앞이라 선이 줄 밖(-13px)으로 나가 잘린다 */
+  .balance-row { flex-wrap: wrap; column-gap: 25px; row-gap: 6px; overflow-x: clip; }
+  .balance-divider { display: none; }
+  .balance-divider + .balance-col { position: relative; }
+  .balance-divider + .balance-col::before {
+    content: '';
+    position: absolute;
+    left: -13px;
+    top: 50%;
+    width: 1px;
+    height: 48px;
+    margin-top: -24px;
+    background: rgba(255,255,255,.3);
+  }
   .summary-grid { margin-bottom: 14px; }
   #page-home .home-col-summary .card { flex: 1; display: flex; flex-direction: column; margin-bottom: 0; }
   #home-subjects { flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
@@ -1403,8 +1421,8 @@ input  { font-family: inherit; }
 
 /* ============ 태블릿 가로 — 화면 높이 채우기 (2026-09-28) ============
    탭에서 보니 아래 절반이 비어 어색했다. 페이지를 화면 높이만큼 세우고 카드·목록이 그 높이를 나눠 갖게 한다.
-   높이는 min-height라 내용이 많으면(내역, 펼친 비정기 카드) 그대로 아래로 늘어난다 */
-@media (min-width: 900px) and (orientation: landscape) {
+   높이는 min-height라 내용이 많으면(내역, 펼친 비정기 카드) 그대로 아래로 늘어난다. 조건은 위 태블릿 블록과 같게 (폰 가로 제외, 2026-10-21) */
+@media (min-width: 900px) and (orientation: landscape) and (min-height: 500px) {
   .page.active {
     display: flex;
     flex-direction: column;
@@ -1467,14 +1485,16 @@ input  { font-family: inherit; }
     height: 100% !important;
   }
   .donut-wrap { flex: 1; min-height: 0; gap: 28px; align-items: stretch; }
+  /* 도넛은 폭을 정한 정사각형 — 폭을 auto로 두고 세로 늘이기에 맡기면, 범례가 카드보다 길 때(지출 계정 8개쯤부터)
+     크롬 버전에 따라 폭이 0이 돼 도넛이 사라졌다 (2026-10-21, 크롬 141에서 재현) */
   .donut-box {
-    width: auto;
+    flex: 0 0 auto;
+    width: min(48%, 300px);
     height: auto;
-    align-self: stretch;
     aspect-ratio: 1 / 1;
-    max-width: 48%;
+    align-self: center;
   }
-  .donut-legend { align-self: center; }
+  .donut-legend { align-self: center; min-width: 0; }
   .donut-legend li { font-size: 15px; margin-bottom: 12px; }
   .legend-dot { width: 12px; height: 12px; }
   .legend-pct { font-size: 13px; }
